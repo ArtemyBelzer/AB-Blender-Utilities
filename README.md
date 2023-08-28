@@ -2,6 +2,7 @@
 ### A plugin with additional utilities for speeding up workflow in Blender.
 ## Feature Overview
 * Bulk asset quick export to an intermediate directory.
+* Usage of directories in object names for quick exporting.
 * Export/Import a point cloud of selected assets in a .JSON format for other applications.
 * Cache object modifiers.
 * Bulk UV utilities: Add, delete, rename, and set active functionality on multiple objects.
