@@ -4,7 +4,7 @@
 * Bulk asset quick export to an intermediate directory.
 * Usage of directories in object names for quick exporting.
 * Export/Import a point cloud of selected assets in a .JSON format for other applications.
-* Cache object modifiers.
+* Cache object modifiers: create a non-evaluating copy of an object for quick previews.
 * Bulk UV utilities: Add, delete, rename, and set active functionality on multiple objects.
 * Bulk Color Attribute/Vertex Color utilities: Delete, remove, rename, set to render, set active.
 * Select all objects referenced in modifiers.
