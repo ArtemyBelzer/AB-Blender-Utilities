@@ -1,0 +1,17 @@
+{
+    "modules":
+    [
+        "file_ops\\file_ops_common.py",
+        "file_ops\\file_ops_custom.py",
+        "file_ops\\file_ops_fbx.py",
+        "color_attribute_ops.py",
+        "cleanup_ops.py",
+        "data_ops.py",
+        "global_ops.py",
+        "modifier_ops.py",
+        "naming_ops.py",
+        "obj_ops.py",
+        "selection_ops.py",
+        "uv_ops.py"
+    ]
+}
