@@ -38,7 +38,7 @@ You can rebind keys inside Blender preferences by navigating to the plugin in th
 ### Bulk Asset export
 ![AB_Blender_Utilities_Quick_Export](https://github.com/ArtemyBelzer/Artemy-Belzers-Blender-Utilities/assets/143417950/f51879e4-5c32-4a20-b7a7-e7ed898d0e77)
 
-The user can select multiple assets in the scene and export them individually. This action also exports child assets. By default, the quick export action ignores assets rendered as a wireframe (viewport display as 'Wire'). You can export multiple selected assets or the currently active asset in the scene.
+The user can select multiple assets in the scene and export them individually. This action also exports child assets. By default, the quick export action ignores assets rendered as a wireframe (viewport display as 'Wire'). You can export multiple selected assets or the currently active asset in the scene. The user can use directories in object names. During export, the quick export operators remove directories from the actual object name + data name.
 
 #### Intermediate directory
 To quickly export assets, you need an intermediate directory. To set an intermediate directory, set it by activating the "("Extra Utilities" or the Main Menu)/File/Set quick export path" operator.
