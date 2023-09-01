@@ -27,7 +27,7 @@ class CategoryCleanup(ab_common.Category):
 class OpABRemoveUnusedMaterialsOnSelected(bpy.types.Operator, CategoryCleanup):
     """Remove unused materials on selected"""
     bl_idname = "object.ab_remove_unused_materials_on_selected"
-    bl_label = "Remove unused materials on selected"
+    bl_label = "Remove unused materials"
     bl_options = {'REGISTER', 'UNDO'}
 
     category_arg = ab_common.OperatorCategories.SELECTION
