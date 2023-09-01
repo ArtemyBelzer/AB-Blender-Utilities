@@ -84,7 +84,6 @@ class OpABCacheModifiers(bpy.types.Operator, CategoryBaseModifier):
     bl_label = "Cache Modifiers"
     bl_options = {'REGISTER', 'UNDO'}
 
-
     def execute(self, context):
         selected_objects_ordered : tuple[bpy.types.Object] = tuple(sorted(ab_common.get_selected_objects(),
                                                                           key = lambda x: x.name,

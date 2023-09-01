@@ -94,6 +94,16 @@ def register(classes : tuple | list = ()) -> None:
     kmi_qe.properties.name = "OBJECT_MT_ab_utility_base_menu_pie"
     __loaded_keymaps__.append((km, kmi_qe))
 
+    kmi_qe : bpy.types.KeyMapItem = km.keymap_items.new(idname = "wm.call_menu",
+                                type = 'E',
+                                value = 'PRESS',
+                                ctrl = False,
+                                alt = False,
+                                shift = True)
+    kmi_qe.properties.name = "OBJECT_MT_ab_utility_base_menu"
+    # kmi_qe.active = False
+    __loaded_keymaps__.append((km, kmi_qe))
+
     kmi_name_pie : bpy.types.KeyMapItem = km.keymap_items.new("wm.call_menu_pie",
                                                                     type = "F2",
                                                                     value = "PRESS",
