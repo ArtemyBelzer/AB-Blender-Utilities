@@ -26,22 +26,14 @@
 
 ## Guide
 ### Accessing the main menu.
-![AB_Blender_Utilities_Pie_Menu_v2](https://github.com/ArtemyBelzer/AB-Blender-Utilities/assets/143417950/1e80f22e-d4cf-420f-b9c5-c86cb48bbd5b)
+![AB_Blender_Utilities_Pie_Menu](https://github.com/ArtemyBelzer/Artemy-Belzers-Blender-Utilities/assets/143417950/38df762d-2cd9-4b83-ab76-1e430f692f64)
 
 There are two ways to access the list of operators in the plugin.
 By pressing Alt+E (default key binding).
 By pressing right-click and navigating to the "Extra Utilities" submenu.
 Go into the "Object" menu in the 3D viewport and navigate to the "Extra Utilities" submenu.
-
-### Alternative Menu layouts & Customization
-Users can exclude specific categories from appearing in the plugin's "Quick Menu" (Alt+E). Submenu inclusion/exclusion can be found under the "General" tab in the plugin's properties; an alternative menu layout, a feature to draw operator menus as buttons, and a feature that adds certain utilities to the properties panel are also available.
-
-![AB_Blender_Utilities_Alternative_Menu](https://github.com/ArtemyBelzer/AB-Blender-Utilities/assets/143417950/2df8adb4-52ce-4d3f-942f-8c8136a3d300)
-
-![AB_Blender_Utilities_Menu_Customization](https://github.com/ArtemyBelzer/AB-Blender-Utilities/assets/143417950/346159ec-5c27-49bb-af45-4a7d2113ea40)
-
 ### Rebinding keys
-![AB_Blender_Utilities_Preferences_Keymaps_Tab](https://github.com/ArtemyBelzer/AB-Blender-Utilities/assets/143417950/02b4e24d-4806-4ece-89e0-1ebb74bc18f2)
+![AB_Blender_Utilities_Keymaps](https://github.com/ArtemyBelzer/Artemy-Belzers-Blender-Utilities/assets/143417950/bc0a619f-e579-4dc3-8c90-44e80799894f)
 You can rebind keys inside Blender preferences by navigating to the plugin in the Add-ons tab. You can rebind the main menu, auto/advanced rename functionality, and the naming pie menu. If you would like to turn off the functioning of these keymaps, please uncheck the box on the left.
 
 ### Bulk Asset export
@@ -54,15 +46,18 @@ To quickly export assets, you need an intermediate directory. To set an intermed
 
 Alternatively, the user can set a global, project-independent quick export directory in the "General" tab of the plugin preferences by checking "Use default export path".
 
+![AB_Blender_Utilities_Preferences_General_Tab](https://github.com/ArtemyBelzer/Artemy-Belzers-Blender-Utilities/assets/143417950/e7b516d9-1b2c-483f-ad41-d8d411ed46c3)
+
 
 Suppose the user wishes to remove any references to an intermediate directory in the project. In that case, the user can click the "Delete quick export attributes from scenes" in the "General" tab of the plugin preferences.
 
 #### FBX Export Settings
+![AB_Blender_Utilities_Preferences_FBX_Exporter_Tab](https://github.com/ArtemyBelzer/Artemy-Belzers-Blender-Utilities/assets/143417950/5634771b-307a-442f-bdab-63c88fd4b5dd)
 
 The user can customize how the asset gets exported under the "FBX Exporter" tab of the plugin preferences. The user can pick the native FBX exporter or a custom implementation in the "Exporter Type" dropdown.
 
 ### Auto/Advanced Renaming
-![AB_Blender_Utilities_Preferences_Naming_Tab_v1 1 0](https://github.com/ArtemyBelzer/AB-Blender-Utilities/assets/143417950/706b1a21-0456-4041-ae09-80352360d325)
+![AB_Blender_Utilities_Preferences_Naming_Tab](https://github.com/ArtemyBelzer/Artemy-Belzers-Blender-Utilities/assets/143417950/eef727c1-9652-4a7b-9fdf-054819aa72f9)
 
 Users can set naming splitters and zero padding count under the plugin's "Naming" tab.
 
