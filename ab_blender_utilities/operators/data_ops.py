@@ -27,10 +27,68 @@ class CategoryAttributes(ab_common.Category):
     category_arg = ab_common.OperatorCategories.SELECTION
     category_icon = 'PROP_CON'
 
+class OpABSetAttributeProperties(bpy.types.Operator, ab_common.PropertiesDialog):
+    """Sets an attribute value"""
+    bl_idname = "mesn.ab_set_attribute_properties"
+    bl_label = "Set Attribute on active object (Properties)"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    attribute_name : bpy.props.StringProperty(
+        name = "Attribute Name",
+        default = "",
+    )
+
+    attribute_value : bpy.props.StringProperty(
+        name = "Attribute Value",
+        default = "",
+    )
+
+    is_object_data : bpy.props.BoolProperty(
+        name = "Set on object data instead",
+        default = False,
+    )
+
+    def execute(self, context):
+        bpy.context.active_object[self.attribute_name] = ast.literal_eval(self.attribute_value)\
+        if self.attribute_value.replace(".","").isnumeric() else self.attribute_value
+
+        return {'FINISHED'}
+    
+class OpABSetAttributePropertiesData(bpy.types.Operator, ab_common.PropertiesDialog):
+    """Sets an attribute value"""
+    bl_idname = "mesn.ab_set_attribute_properties_data"
+    bl_label = "Set Attribute on active data (Properties)"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    attribute_name : bpy.props.StringProperty(
+        name = "Attribute Name",
+        default = "",
+    )
+
+    attribute_value : bpy.props.StringProperty(
+        name = "Attribute Value",
+        default = "",
+    )
+
+    is_object_data : bpy.props.BoolProperty(
+        name = "Set on object data instead",
+        default = False,
+    )
+
+    def execute(self, context):
+        obj : bpy.types.Object = bpy.context.active_object
+        if obj.data:
+            obj.data[self.attribute_name] = ast.literal_eval(self.attribute_value)\
+            if self.attribute_value.replace(".","").isnumeric() else self.attribute_value
+
+            return {'FINISHED'}
+        print(ab_common.warning(self, "No mesh data found"))
+        return {'CANCELED'}
+
 class OpABSetAttributeOnSelected(bpy.types.Operator, CategoryAttributes):
     """Sets an attribute on a selected object"""
     bl_idname = "object.ab_set_attribute_on_selected"
-    bl_label = "Set Attribute On Selected"
+    bl_label = "Set Object/Data Attribute"
     bl_options = {'REGISTER', 'UNDO'}
     
     attribute_name : bpy.props.StringProperty(
@@ -63,8 +121,8 @@ class OpABSetAttributeOnSelected(bpy.types.Operator, CategoryAttributes):
     
 class OpABRandomizeAttributeOnSelected(bpy.types.Operator, CategoryAttributes):
     """Randomizes an attribute on a selected object"""
-    bl_idname = "object.ab_randomize_attribute_on_selected"
-    bl_label = "Randomize Attribute On Selected"
+    bl_idname = "wm.ab_randomize_attribute_on_selected"
+    bl_label = "Randomize Object/Data Attribute"
     bl_options = {'REGISTER', 'UNDO'}
     
     attribute_name : bpy.props.StringProperty(
@@ -103,6 +161,85 @@ class OpABRandomizeAttributeOnSelected(bpy.types.Operator, CategoryAttributes):
                     obj.data[self.attribute_name] = random.randrange(self.min, self.max)
 
         return {'FINISHED'}
+    
+class OpABRandomizeAttributeProperties(bpy.types.Operator, ab_common.PropertiesDialog):
+    """Randomizes an attribute value"""
+    bl_idname = "mesn.ab_randomize_attribute_properties"
+    bl_label = "Randomize Attribute on active object (Properties)"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    attribute_name : bpy.props.StringProperty(
+        name = "Attribute Name",
+        default = "",
+    )
+
+    min : bpy.props.IntProperty(
+        name = "Attribute Value",
+        default = -1000000000,
+    )
+
+    max : bpy.props.IntProperty(
+        name = "Attribute Value",
+        default = 1000000000,
+    )
+
+    is_object_data : bpy.props.BoolProperty(
+        name = "Set on object data instead",
+        default = False,
+    )
+
+    is_float : bpy.props.BoolProperty(
+        name = "Float",
+        default = False,
+    )
+
+    def execute(self, context):
+        obj : bpy.types.Object = bpy.context.active_object
+        random_value : int | float = random.uniform(self.min, self.max) if self.is_float else random.randrange(self.min, self.max)
+        obj[self.attribute_name] = random_value
+
+        return {'FINISHED'}
+    
+class OpABRandomizeAttributePropertiesData(bpy.types.Operator, ab_common.PropertiesDialog):
+    """Randomizes an attribute value"""
+    bl_idname = "mesn.ab_randomize_attribute_properties_data"
+    bl_label = "Randomize Attribute on active data (Properties)"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    attribute_name : bpy.props.StringProperty(
+        name = "Attribute Name",
+        default = "",
+    )
+
+    min : bpy.props.IntProperty(
+        name = "Attribute Value",
+        default = -1000000000,
+    )
+
+    max : bpy.props.IntProperty(
+        name = "Attribute Value",
+        default = 1000000000,
+    )
+
+    is_object_data : bpy.props.BoolProperty(
+        name = "Set on object data instead",
+        default = False,
+    )
+
+    is_float : bpy.props.BoolProperty(
+        name = "Float",
+        default = False,
+    )
+
+    def execute(self, context):
+        obj : bpy.types.Object = bpy.context.active_object
+        random_value : int | float = random.uniform(self.min, self.max) if self.is_float else random.randrange(self.min, self.max)
+        if obj.data:
+            obj.data[self.attribute_name] = random_value
+
+            return {'FINISHED'}
+        print(ab_common.warning(self, "No mesh data found"))
+        return {'CANCELED'}
     
 class OpABRotationToAttribute(bpy.types.Operator, CategoryAttributes):
     """Stores/restores the rotation of the target object(s) and resets the rotation for easier editing"""
@@ -150,7 +287,11 @@ class OpABRotationToAttributeRestore(bpy.types.Operator, CategoryAttributes):
                         
         return {'FINISHED'}
     
-OPERATORS : tuple[bpy.types.Operator] = (OpABSetAttributeOnSelected,
+OPERATORS : tuple[bpy.types.Operator] = (OpABSetAttributeProperties,
+                                         OpABSetAttributePropertiesData,
+                                         OpABSetAttributeOnSelected,
+                                         OpABRandomizeAttributeProperties,
+                                         OpABRandomizeAttributePropertiesData,
                                          OpABRandomizeAttributeOnSelected,
                                          OpABRotationToAttribute,
                                          OpABRotationToAttributeRestore,
