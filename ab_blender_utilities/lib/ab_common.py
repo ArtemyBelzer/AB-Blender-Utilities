@@ -41,11 +41,6 @@ class Category():
         if cls.category_arg == OperatorCategories.SELECTION:
             return len(context.selected_objects) > 0
         return True
-    
-class PropertiesDialog():
-    def invoke(self, context, event):
-        wm = context.window_manager
-        return wm.invoke_props_dialog(self)
 
 # Operator reports
 

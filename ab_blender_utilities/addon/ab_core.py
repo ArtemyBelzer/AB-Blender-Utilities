@@ -17,7 +17,7 @@
 import bpy
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 from types import ModuleType
-from . import ab_keymaps, ab_persistent, ab_op_menus, ab_prefs, ab_constants, ab_op_panels
+from . import ab_keymaps, ab_persistent, ab_op_menus, ab_prefs, ab_constants
 from .. import operators
 
 
@@ -63,9 +63,6 @@ def register():
 
     # Add menu list into global class list
     __classes += ab_op_menus.load(__classes)
-
-    if ab_persistent.get_preferences().load_viewport_panel:
-        __classes += ab_op_panels.load(__classes)
 
     for cls in __classes:
             try:

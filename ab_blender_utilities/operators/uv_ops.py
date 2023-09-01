@@ -26,7 +26,7 @@ class CategoryBaseUVs(ab_common.Category):
     def poll(cls, context):
         targets : tuple[bpy.types.Object] = ab_common.get_selected_objects()
         return len(targets)>0 and\
-        ab_uv.get_uv_channel_count(targets)>0
+        ab_uv.get_uv_channel_count(targets)
 
 class ABUVSelection(bpy.types.PropertyGroup):
     uv_channel : bpy.props.StringProperty()

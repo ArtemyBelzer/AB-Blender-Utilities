@@ -21,7 +21,7 @@ bl_info = {
     "location" : "Object Menu, Search, or Shortcuts (Default keymap for pie menu 'Alt+E')",
     "category" : "Utility",
     "doc_url" : "https://github.com/ArtemyBelzer",
-    "version" : (1, 1, 0)
+    "version" : (1, 0, 0)
 }
 
 from .addon import ab_core

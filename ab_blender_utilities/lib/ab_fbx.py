@@ -18,7 +18,7 @@ import bpy
 from ..addon import ab_persistent
 from typing import Final
 
-exporter_type : Final[tuple[tuple]]= (('NATIVE', "Native FBX", ""),
+exporter_type : Final[tuple[tuple]]= (('NATIVE', "Native", ""),
                                       ('CUSTOM', "Custom", ""))
 
 scale_options : Final[tuple[tuple]]= (('FBX_SCALE_NONE', "None", "FBX_SCALE_NONE"),

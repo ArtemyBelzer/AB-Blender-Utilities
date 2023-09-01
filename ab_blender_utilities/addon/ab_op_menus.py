@@ -17,107 +17,22 @@
 import bpy
 import operator
 from typing import Final
-from ..lib import ab_common
-from . import ab_constants, ab_persistent
+from . import ab_constants
 
 __init : bool = False
-
-def __pie_menu_display_name() -> str:
-    prefs : bpy.types.AddonPreferences = ab_persistent.get_preferences()
-
-    return " Pie" if prefs.alternative_menu else ""
-    
-
-def __menu_has_prefs(menu : bpy.types.Menu) -> bool:
-    """Returns `True` if the addon preferences have the attributes to
-    hide the submenu entry or draw it as buttons."""
-    prefs : bpy.types.AddonPreferences = ab_persistent.get_preferences()
-
-    return hasattr(prefs, f"submenu_{menu.internal_name}_show") and\
-           hasattr(prefs, f"submenu_{menu.internal_name}_buttons")
-
-def __menu_layout(layout : bpy.types.UILayout,
-                  menu : bpy.types.Menu,
-                  is_pie : bool,
-                  *,
-                  as_buttons : bool = False,
-                  initial : bool = False) -> None:
-    """Adds a `bpy.types.Menu` object to a `bpy.types.UILayout`.\n
-    Draws the menu with an icon if it belongs to a pie menu.\n
-    The `as_buttons` argument draws the operators contained within a `menu` and its child submenus as buttons."""
-    prefs : bpy.types.AddonPreferences = ab_persistent.get_preferences()
-
-    if as_buttons and is_pie:
-        if initial and not prefs.alternative_menu:
-            column = layout.column()
-            spacing = column.column()
-            spacing.separator()
-            spacing.scale_x = prefs.pie_menu_button_spacing_x
-            spacing.scale_y = prefs.pie_menu_button_spacing_y
-            layout = column
-
-        box = layout.box()
-
-        for cls in menu.children:
-            if issubclass(cls, bpy.types.Operator):
-                if getattr(prefs, f"submenu_{menu.internal_name}_show"):  # Skip adding operators if the menu shouldn't be shown.
-                    box.operator(cls.bl_idname)
-            elif issubclass(cls, bpy.types.Menu):
-                """
-                A submenu can be rendered as buttons only when an attribute is present in the preferences of the addon.
-                It's safer to perform a check using `__menu_has_prefs` before calling this function.
-                """
-                if getattr(prefs, f"submenu_{cls.internal_name}_show"):
-                    __menu_layout(box, cls, is_pie, as_buttons = as_buttons)  # Render submenu buttons
-    else:
-        layout.menu(menu.bl_idname, icon = menu.icon) \
-        if is_pie else layout.menu(menu.bl_idname)
 
 # Base menu draw function
 
 def menu_draw(self : any, context: any, *, is_pie : bool = False) -> None:
     """Shared menu function"""
-    prefs : bpy.types.AddonPreferences = ab_persistent.get_preferences()
     menu_submenus : list[bpy.types.Menu] = [cls for cls in self.children if issubclass(cls, bpy.types.Menu)]
     menu_ops : list[bpy.types.Operator] = [cls for cls in self.children if issubclass(cls, bpy.types.Operator)]
     layout = self.layout
     if is_pie:
-        if prefs.alternative_menu:
-            layout = layout.menu_pie()
-            layout = layout.column()
-            layout.scale_y = 2
-            layout.scale_x = 2
-            layout = layout.box()
-        else:
-            layout = layout.menu_pie()
-
+        layout = layout.menu_pie()
     for submenu_i in menu_submenus:
-        try:
-            if __menu_has_prefs(submenu_i):
-                if getattr(prefs, f"submenu_{submenu_i.internal_name}_show"):
-                    __menu_layout(layout,
-                                  submenu_i,
-                                  is_pie,
-                                  as_buttons = getattr(prefs,
-                                                       f"submenu_{submenu_i.internal_name}_buttons"),
-                                  initial = True)
-                else:  # If this menu is not shown, check if child submenus are renderable.
-                    for submenu_c in submenu_i.children:
-                        if issubclass(submenu_c, bpy.types.Menu):
-                            if __menu_has_prefs(submenu_c):
-                                if getattr(prefs, f"submenu_{submenu_c.internal_name}_show"):
-                                    __menu_layout(layout,
-                                                  submenu_c,
-                                                  is_pie,
-                                                  as_buttons = getattr(prefs,
-                                                                       f"submenu_{submenu_c.internal_name}_buttons"),
-                                                  initial = True)
-                                    break
-            else:
-                __menu_layout(layout, submenu_i, is_pie)
-                        
-        except Exception as e:
-            print(f"{ab_constants.error}Error displaying sub-menu. {e}")
+        layout.menu(submenu_i.bl_idname, icon = submenu_i.icon) \
+        if is_pie else layout.menu(submenu_i.bl_idname)
     
     displayed_ops : int = 0
     for submenu_op in menu_ops:
@@ -141,13 +56,8 @@ def menu_draw(self : any, context: any, *, is_pie : bool = False) -> None:
         layout.label(text = ab_constants.missing_condition_msg)
 
 class BaseMenu():
-    bl_label = ab_constants.plugin_menu_name
+    bl_label = ab_constants.plugin_name
     is_pie : bool
-
-    @classmethod
-    def change_bl_label(cls : type, text : str) -> None:
-        """Changes the `bl_label` of the current class."""
-        cls.text = text
 
 class OBJECT_MT_ab_utility_base_menu(bpy.types.Menu, BaseMenu):
     """Main operator menu of the Blender Utility addon"""
@@ -163,7 +73,6 @@ class OBJECT_MT_ab_utility_base_menu_pie(bpy.types.Menu, BaseMenu):
     """Main pie operator menu of Blender Utility addon"""
     bl_idname = f"OBJECT_MT_{ab_constants.plugin_name_internal}_base_menu_pie"
     is_pie = True
-    bl_label = ab_constants.plugin_menu_name + " Quick Menu"
     children : list = []
     icon = None
 
@@ -214,7 +123,6 @@ def create_dynamic_submenu_class(category : str = "Example/Category",
                                 "bl_idname" : f"OBJECT_MT_{ab_constants.plugin_name_internal}_submenu_{internal_name}",
                                 "bl_label" : menu_name,
 
-                                "internal_name" : internal_name,
                                 "parent" : parent,
                                 "children" : children,
                                 "category" : category,
@@ -232,7 +140,6 @@ def create_dynamic_submenu_class(category : str = "Example/Category",
                 "bl_idname" : f"OBJECT_MT_{ab_constants.plugin_name_internal}_submenu_{internal_name}_pie",
                 "bl_label" : menu_name + " Pie Menu",
 
-                "internal_name" : internal_name,
                 "parent" : parent,
                 "children" : children_pie,
                 "category" : category,
