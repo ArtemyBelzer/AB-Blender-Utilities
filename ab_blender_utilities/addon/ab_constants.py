@@ -17,7 +17,8 @@
 from typing import Final
 
 # General
-plugin_name : Final[str] = "Extra Utilities"
+plugin_name_short : Final[str] = "AB Utilities"
+plugin_menu_name : Final[str] = "Extra Utilities"
 plugin_name_internal : Final[str] = 'ab_utility'
 
 # Errors
@@ -35,15 +36,25 @@ block_types : Final[tuple[str]] = ("meshes", "materials", "textures", "images")
 e_pref_tab : Final[tuple[tuple]]= (('GENERAL', "General", ""),
                                    ('NAMING', "Naming", ""),
                                    ('KEYS', "Keybindings", ""),
-                                   ('FBX EXPORTER', "FBX Exporter", ""),
+                                   ('QUICK_EXPORT', "Quick Export", ""),
                                    ('ADVANCED', "Advanced", ""))
 
+# Preference tabs
+e_pref_display_tab : Final[tuple[tuple]]= (('SUBMENUS', "Menus", ""),
+                                           ('PANELS', "Panels", ""),
+                                           ('SUBMENU_BUTTONS', "Button Menus", ""),
+                                           ('PANELS_IN_PROPERTIES', "Property Panel", ""))
+
 # Missing Conditions
-missing_condition_msg : Final[str] = "Conditions to use these operators were not met. Please read the descriptions or the \"ReadMe\" of the addon."
+missing_condition_msg : Final[str] = "The conditions to use these operators were not met. Please read the descriptions or the \"ReadMe\" of the addon."
+missing_condition_msg_panel : Final[str] = "The conditions to use these operators were not met."
 
 # Menu init error
-menu_not_initialized : Final[str] = "Menus are not initialzied."
-menu_initialized : Final[str] = "Menus are already initialzied."
+menus_not_initialized : Final[str] = "Menus are not initialzied."
+menus_initialized : Final[str] = "Menus are already initialzied."
+
+panels_not_initialized : Final[str] = "Panels are not initialzied."
+panels_initialized : Final[str] = "Panels are already initialzied."
 
 # Input class errors
 input_classes_none : Final[str] = "The input classes are missing. (NoneType)"
