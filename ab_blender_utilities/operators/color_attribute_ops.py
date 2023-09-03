@@ -26,16 +26,31 @@ class CategoryBaseColorAttributes(ab_common.Category):
     def poll(cls, context):
         targets : tuple[bpy.types.Object] = ab_common.get_selected_objects()
         return len(targets)>0 and\
-        ab_color_attributes.get_color_attribute_channel_count(targets)
+        ab_color_attributes.get_color_attribute_channel_count(targets)>0
 
 class ABColorAttributeSelection(bpy.types.PropertyGroup):
     name : bpy.props.StringProperty()
     selected : bpy.props.BoolProperty(name = "")
 
+class OpABRemoveVertexColors(bpy.types.Operator):
+    """Removes all Color Attributes from selected objects"""
+    bl_idname = "object.ab_remove_vertex_colors_active"
+    bl_label = "Remove All"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        return ab_color_attributes.get_color_attribute_channel_count(bpy.context.active_object)>0
+    
+    def execute(self, context):
+        ab_color_attributes.remove_vertex_colors_from_object(bpy.context.active_object)
+
+        return {'FINISHED'}
+
 class OpABRemoveVertexColorsFromSelected(bpy.types.Operator, CategoryBaseColorAttributes):
     """Removes all Color Attributes from selected objects"""
     bl_idname = "object.ab_remove_vertex_colors_from_selected"
-    bl_label = "Remove all Color Attributes from selected"
+    bl_label = "Remove all Color Attributes"
     bl_options = {'REGISTER', 'UNDO'}
     
     def execute(self, context):        
@@ -192,7 +207,8 @@ class OpABColorAttributeRenderSet(bpy.types.Operator, CategoryBaseColorAttribute
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self)
     
-OPERATORS : tuple[bpy.types.Operator] = (OpABColorAttributeRenderSet,
+OPERATORS : tuple[bpy.types.Operator] = (OpABRemoveVertexColors,
+                                         OpABColorAttributeRenderSet,
                                          OpABDeleteColorAttributes,
                                          OpABRenameColorAttribute,
                                          OpABRemoveVertexColorsFromSelected,

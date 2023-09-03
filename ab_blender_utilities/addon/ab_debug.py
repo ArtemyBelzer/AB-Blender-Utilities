@@ -14,24 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-bl_info = {
-    "name" : "Artemy Belzer's Blender Utilities",
-    "blender" : (3, 4, 0),
-    "author" : "Artemy belzer",
-    "location" : "Object Menu, Search, or Shortcuts (Default keymap for pie menu 'Alt+E')",
-    "category" : "Utility",
-    "doc_url" : "https://github.com/ArtemyBelzer",
-    "version" : (1, 1, 0)
-}
+"""
+This module stores variables used for debugging.
+"""
+from typing import Final
 
-if "ab_core" in locals():
-    import importlib
-    importlib.reload(ab_core)
-else:
-    from .addon import ab_core
-
-def register() -> None:
-    ab_core.register()
-
-def unregister() -> None:
-    ab_core.unregister()
+skip_loading_properties : Final[bool] = False
+skip_loading_operators : Final[bool] = False
+skip_loading_importers : Final[bool] = False
+skip_loading_exporters : Final[bool] = False
