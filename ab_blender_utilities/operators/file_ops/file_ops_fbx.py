@@ -30,6 +30,18 @@ class OpABQuickExportFBX(bpy.types.Operator, CategoryFileFBX):
     bl_idname = "export_scene.ab_quick_export_fbx"
     bl_label = "Quick export active as FBX"
     bl_options = {'REGISTER', 'UNDO'}
+
+    restore_selection : bpy.props.BoolProperty(
+        name = "Restore Selection",
+        description = ab_constants.restore_selection_description,
+        default = True
+    )
+
+    export_wire_objects : bpy.props.BoolProperty(
+        name = "Export Wired",
+        description = ab_constants.export_wired_description,
+        default = False
+    )
     
     def execute(self, context):
         if ab_persistent.get_preferences().fbx_exporter_type == 'NATIVE':
@@ -39,7 +51,11 @@ class OpABQuickExportFBX(bpy.types.Operator, CategoryFileFBX):
             
             # Selection
             active_object : bpy.types.Object = bpy.context.active_object
-            ab_common.select_child_objects()
+            ab_common.select_child_objects(self.export_wire_objects)
+
+            prefs = ab_persistent.get_preferences()
+            if prefs.quick_export_name_collection > 0:
+                ab_quick_export.select_objects_from_name_collection()
 
             # Location & rotation
             location : mathutils.Vector = active_object.location.copy()
@@ -73,6 +89,12 @@ class OpABQuickExportFBX(bpy.types.Operator, CategoryFileFBX):
             active_object.location = location
             active_object.rotation_euler = rotation
             active_object.name = old_name
+
+            if self.restore_selection:
+                ab_common.deselect_all()
+                active_object.select_set(True)
+                bpy.context.view_layer.objects.active = active_object
+
             return {'FINISHED'}
         else:
             bpy.ops.export_scene.ab_export_custom()
@@ -83,6 +105,18 @@ class OpABQuickExportSelectedFBX(bpy.types.Operator, CategoryFileFBX):
     bl_idname = "export_scene.ab_quick_export_selected_fbx"
     bl_label = "Quick export selected as FBX"
     bl_options = {'REGISTER', 'UNDO'}
+
+    restore_selection : bpy.props.BoolProperty(
+        name = "Restore Selection",
+        description = ab_constants.restore_selection_description,
+        default = True
+    )
+
+    export_wire_objects : bpy.props.BoolProperty(
+        name = "Export Wired",
+        description = ab_constants.export_wired_description,
+        default = False
+    )
     
     def execute(self, context):
         if ab_persistent.get_preferences().fbx_exporter_type == 'NATIVE':
@@ -91,6 +125,10 @@ class OpABQuickExportSelectedFBX(bpy.types.Operator, CategoryFileFBX):
                 return {'CANCELLED'}
 
             export_objects : tuple[bpy.types.Object] = ab_common.get_selected_objects()
+
+            # Stores the active object in the scene if `restore_selection` is `True`.
+            if self.restore_selection:
+                active_object_scene : bpy.types.Object = bpy.context.active_object
             
             for obj in export_objects:
                 # Selection
@@ -99,7 +137,11 @@ class OpABQuickExportSelectedFBX(bpy.types.Operator, CategoryFileFBX):
                 
                 bpy.context.view_layer.objects.active = obj
                 active_object : bpy.types.Object = obj
-                ab_common.select_child_objects()
+                ab_common.select_child_objects(self.export_wire_objects)
+
+                prefs = ab_persistent.get_preferences()
+                if len(prefs.quick_export_name_collection) > 0:
+                    ab_quick_export.select_objects_from_name_collection(prefs.quick_export_name_collection)
 
                 # Location & rotation
                 location : mathutils.Vector = active_object.location.copy()
@@ -130,6 +172,12 @@ class OpABQuickExportSelectedFBX(bpy.types.Operator, CategoryFileFBX):
                 active_object.rotation_euler = rotation
                 # Return old object name
                 obj.name = old_name
+
+            if self.restore_selection:
+                ab_common.deselect_all()
+                ab_common.select_objects(export_objects)
+                bpy.context.view_layer.objects.active = active_object_scene
+                    
             return {'FINISHED'}
         else:
             bpy.ops.export_scene.ab_export_custom()

@@ -75,8 +75,9 @@ class OpABExportPointCloudFile(bpy.types.Operator, ExportHelper, CategoryFile):
             asset_path = ""
             if "asset_path" in obj:
                 asset_path = obj["asset_path"]
-            point = ab_json.PointCloudPoint(location = (obj.location.x, obj.location.y, obj.location.y),
+            point = ab_json.PointCloudPoint(location = (obj.location.x, obj.location.y, obj.location.z),
                                             rotation = (obj.rotation_euler.x, obj.rotation_euler.y, obj.rotation_euler.z),
+                                            scale = (obj.scale.x, obj.scale.y, obj.scale.z),
                                             asset_path = asset_path)
             
             data.append(point)
@@ -117,13 +118,15 @@ class OpABImportPointCloudFile(bpy.types.Operator, ImportHelper, CategoryFile):
                     for i, data_point in enumerate(data):
                         point_pos = mathutils.Vector(data_point[0])
                         point_rot = mathutils.Vector(data_point[1])
+                        point_scale = mathutils.Vector(data_point[2])
                         new_inst = bpy.data.objects.new("SMI_"+active_obj.name+"_{}".format(ab_common.pad_index(i+1)), 
                                                         active_obj.data)
                         bpy.context.collection.objects.link(new_inst)
                         new_inst.location = point_pos
                         new_inst.rotation_euler = point_rot
-                        if data_point[2] != "":
-                            new_inst["asset_path"] = data_point[2]
+                        new_inst.scale = point_scale
+                        if data_point[3] != "":
+                            new_inst["asset_path"] = data_point[3]
                 else:
                     ab_common.warning(self, "You need a \'MESH\' object select to instantiate")
                     return {'CANCELED'}

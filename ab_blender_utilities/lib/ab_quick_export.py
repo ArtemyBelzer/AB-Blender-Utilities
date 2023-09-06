@@ -34,3 +34,17 @@ def has_quick_export_path(scene : bpy.types.Scene = None) -> bool:
     except:
         return False
     
+def select_objects_from_name_collection(name_collection : bpy.props.CollectionProperty) -> None:
+    for obj in bpy.context.selected_objects:
+        for ch_obj in obj.children:
+                for name_item in name_collection:
+                    if name_item.arg_type == 'CONTAINS':
+                        if name_item.name in ch_obj.name:
+                            ch_obj.select_set(True)
+                    elif name_item.arg_type == 'BEGINS_WITH':
+                        if ch_obj.name.startswith(name_item.name):
+                            ch_obj.select_set(True)
+                    elif name_item.arg_type == 'ENDS_WITH':
+                        if ch_obj.name.endswith(name_item.name):
+                            ch_obj.select_set(True)
+    

@@ -23,25 +23,30 @@ class CategorySelection(ab_common.Category):
     category = "Selection"
     category_icon = 'RESTRICT_SELECT_OFF'
 
-class OpABSelectChildObjectsRecursive(bpy.types.Operator, CategorySelection):
-    """Selects all child objects"""
-    bl_idname = "object.ab_select_all_child_objects_recursive"
-    bl_label = "Select child objects (Recursive)"
+class OpABSelectChildObjects(bpy.types.Operator, CategorySelection):
+    """Selects all child objects.\nThis operator can select objects recursively"""
+    bl_idname = "object.ab_select_all_child_objects"
+    bl_label = "Select child objects"
     bl_options = {'REGISTER', 'UNDO'}
 
     category_arg = ab_common.OperatorCategories.SELECTION
+
+    recursive : bpy.props.BoolProperty(
+        name = "Recursive",
+        default = True
+    )
     
     select_wireframe : bpy.props.BoolProperty(
         name = "Select wireframe",
-        default = False,
+        default = True,
     )
 
     def execute(self, context):
-        ab_common.select_child_objects(self.select_wireframe)  
+        ab_common.select_child_objects(self.select_wireframe, self.recursive)  
         return {'FINISHED'}
     
 class OpABSaveSelection(bpy.types.Operator, CategorySelection):
-    """Saves the current selection, can be restorted using the \"Restore Selection\" operator."""
+    """Saves the current selection, can be restorted using the \"Restore Selection\" operator"""
     bl_idname = "object.ab_save_selection"
     bl_label = "Save Selection"
     bl_options = {'REGISTER', 'UNDO'}
@@ -53,7 +58,7 @@ class OpABSaveSelection(bpy.types.Operator, CategorySelection):
         return {'FINISHED'}
     
 class OpABRestoreSelection(bpy.types.Operator, CategorySelection):
-    """Restores a selection saved using the \"Save Selection\" operator."""
+    """Restores a selection saved using the \"Save Selection\" operator"""
     bl_idname = "object.ab_restore_selection"
     bl_label = "Restore Selection"
     bl_options = {'REGISTER', 'UNDO'}
@@ -69,7 +74,7 @@ class OpABRestoreSelection(bpy.types.Operator, CategorySelection):
         return {'FINISHED'}
     
 class OpABDeleteSavedSelection(bpy.types.Operator, CategorySelection):
-    """Restores a selection saved using the \"Save Selection\" operator."""
+    """Restores a selection saved using the \"Save Selection\" operator"""
     bl_idname = "object.ab_delete_saved_selection"
     bl_label = "Delete Saved Selection"
     bl_options = {'REGISTER', 'UNDO'}
@@ -84,7 +89,7 @@ class OpABDeleteSavedSelection(bpy.types.Operator, CategorySelection):
         ab_selection_saving.delete_saved_selection()
         return {'FINISHED'}
     
-OPERATORS : tuple[bpy.types.Operator] = (OpABSelectChildObjectsRecursive,
+OPERATORS : tuple[bpy.types.Operator] = (OpABSelectChildObjects,
                                          OpABSaveSelection,
                                          OpABRestoreSelection,
                                          OpABDeleteSavedSelection)

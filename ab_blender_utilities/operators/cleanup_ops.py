@@ -34,7 +34,9 @@ class OpABRemoveUnusedMaterialsOnSelected(bpy.types.Operator, CategoryCleanup):
     
     def execute(self, context):        
         for obj in bpy.context.selected_objects:
-            bpy.ops.object.material_slot_remove_unused({"object": obj})
+            if obj.data:
+                if hasattr(obj.data, "materials"):
+                    bpy.ops.object.material_slot_remove_unused({"object": obj})
 
         return {'FINISHED'}
     
