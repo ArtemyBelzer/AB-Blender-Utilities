@@ -576,6 +576,7 @@ class ABUtilAddonPrefs(bpy.types.AddonPreferences):
         if self.fbx_exporter_type == 'NATIVE':
             box.label(text = "Native FBX Export Preferences")
             box_naming = box.box()
+            box_naming.label(text = "Quick Export Name Collection")
             box_naming.label(text = "Include the following objects despite their viewport display type:")
             self.__draw_quick_export_names(box_naming)
             box.prop(self, "native_fbx_ex_scale_options")
