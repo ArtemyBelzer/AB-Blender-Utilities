@@ -30,21 +30,35 @@ class OpABObjectNamesFromParent(bpy.types.Operator, CategoryNaming):
     bl_idname = "wm.ab_object_names_from_parent"
     bl_label = "Object names from parent"
     bl_options = {'REGISTER', 'UNDO'}
+
+    recursive : bpy.props.BoolProperty(
+        name = "Recursive",
+        default = True
+    )
+
+    rename_wireframe : bpy.props.BoolProperty(
+        name = "Rename wireframe",
+        default = True,
+    )
+
+    bake_alias_after_idx : bpy.props.BoolProperty(
+        name = "Bake alias after index",
+        default = True,
+    )
     
     def execute(self, context):        
         for obj in bpy.context.selected_objects:
             # Selection
-            object_name = obj.name.split("/")
-            object_name = object_name[len(object_name)-1]
-            for alias in ab_constants.bake_alias:
-                if alias in object_name:
-                    object_name = object_name.split(alias)
-                    object_name[1] = alias
-                    break
-            for i, ch_obj in enumerate(obj.children):
-                ch_obj.name = object_name + "_pt" + ab_common.pad_index(i+1)
-                if ch_obj.data:
-                    ch_obj.data.name = ch_obj.name
+            obj_name_split : list = obj.name.split("/")
+            obj_name : str = obj_name_split[len(obj_name_split)-1]
+            obj_alias : str = ""
+            if self.bake_alias_after_idx:
+                for alias in ab_constants.bake_suffixes:
+                    if alias in obj_name:
+                        obj_alias = alias
+                        obj_name = obj_name.replace(alias, "")
+                        break
+            ab_naming_extra.rename_child_objects(obj, obj_name, obj_alias, self.recursive, self.rename_wireframe)
 
         return {'FINISHED'}
     

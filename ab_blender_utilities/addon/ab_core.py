@@ -19,6 +19,7 @@ import traceback
 import sys
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 from types import ModuleType
+from typing import Final
 from . import ab_constants, ab_debug, ab_keymaps, ab_op_menus, ab_op_panels, ab_persistent, ab_prefs
 from .. import operators
 
@@ -28,6 +29,14 @@ __exporters : list[ExportHelper] = []
 __importers : list[ImportHelper] = []
 __preferences : list[bpy.props.PointerProperty] = []
 __properties : list[bpy.types.PropertyGroup] = []
+
+__preference_classes : Final[tuple[bpy.types.AddonPreferences|
+                             bpy.types.PropertyGroup|
+                             bpy.types.UIList]] = (ab_prefs.PanelVars,
+                                                  ab_prefs.ABUTIL_UL_name_slots,
+                                                  ab_prefs.ABUtilQuickExportNames,
+                                                  ab_prefs.ABUtilAddonPrefs)
+
 
 def __clear_vars() -> None:
     """Clear variables that store pointers to references to classes."""
@@ -44,8 +53,8 @@ def register():
     
     # Addon preference class
     try:
-        bpy.utils.register_class(ab_prefs.PanelVars)
-        bpy.utils.register_class(ab_prefs.ABUtilAddonPrefs)
+        for pref_cls in __preference_classes:
+            bpy.utils.register_class(pref_cls)
     except Exception as e:
             print(f"{ab_constants.error} Error registering preferences {e}")
     
@@ -110,8 +119,6 @@ def register():
 
 def unregister():
     global __classes, __exporters, __importers, __preferences, __properties
-
-    # Unload menus and panels.
     ab_op_menus.unload()
     ab_op_panels.unload()
     
@@ -140,8 +147,8 @@ def unregister():
 
     # Addon preference class
     try:
-        bpy.utils.unregister_class(ab_prefs.ABUtilAddonPrefs)
-        bpy.utils.unregister_class(ab_prefs.PanelVars)
+        for pref_cls in __preference_classes:
+            bpy.utils.unregister_class(pref_cls)
     except Exception as e:
             print(f"{ab_constants.error} Error unregistering preferences {e}")
 

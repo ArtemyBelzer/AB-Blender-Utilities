@@ -20,7 +20,8 @@ These are not included in the dynamically filled menu.
 """
 import bpy
 from ..lib import ab_quick_export
-from ..addon import ab_keymaps
+from ..addon import ab_keymaps, ab_persistent
+from ..addon.ab_constants import e_add_remove
 
 
 class OpAbDeleteSceneQuickExportPaths(bpy.types.Operator):
@@ -45,5 +46,30 @@ class OpAbRestoreDefaultKeymaps(bpy.types.Operator):
         ab_keymaps.restore()
         return {'FINISHED'}
     
-OPERATORS : tuple[bpy.types.Operator] = (OpAbDeleteSceneQuickExportPaths,
+class OpAbAddRemoveQuickExportNames(bpy.types.Operator):
+    """Adds or removes quick export names"""
+    bl_idname = "object.ab_add_remove_quick_export_name"
+    bl_label = "Add/Remove Quick Export Names"
+    bl_description = "Adds or removes a string to a list in the plugin's properties."
+    bl_options = {'REGISTER'}
+
+    arg : bpy.props.EnumProperty(
+        items = e_add_remove
+        )
+    
+    def invoke(self, context, event):
+        prefs = ab_persistent.get_preferences()
+        if self.arg == "ADD":
+            name_entry = prefs.quick_export_name_collection.add()
+            name_entry.name = "Default"
+            name_entry.type = 1
+            return {'FINISHED'}
+        elif self.arg == "REMOVE":
+            entry_idx = prefs.panel_vars_ptr.quick_export_name_selection
+            prefs.panel_vars_ptr.quick_export_name_selection -=1
+            prefs.quick_export_name_collection.remove(entry_idx)
+            return {'FINISHED'}
+    
+OPERATORS : tuple[bpy.types.Operator] = (OpAbAddRemoveQuickExportNames,
+                                         OpAbDeleteSceneQuickExportPaths,
                                          OpAbRestoreDefaultKeymaps)

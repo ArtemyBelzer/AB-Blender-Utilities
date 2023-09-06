@@ -33,14 +33,23 @@ bake_suffixes : Final[tuple[str]] = ("_high", "_low", "_High", "_Low")
 block_types : Final[tuple[str]] = ("meshes", "materials", "textures", "images")
 
 # Preference tabs
-e_pref_tab : Final[tuple[tuple]]= (('GENERAL', "General", ""),
+e_pref_tab : Final[tuple[tuple]] = (('GENERAL', "General", ""),
                                    ('NAMING', "Naming", ""),
                                    ('KEYS', "Keybindings", ""),
                                    ('QUICK_EXPORT', "Quick Export", ""),
                                    ('ADVANCED', "Advanced", ""))
 
+# String find action
+e_string_find_action : Final[tuple[tuple]] = (('CONTAINS', "Contains", ""),
+                                              ('BEGINS_WITH', "Begins with", ""),
+                                              ('ENDS_WITH', "Ends with", ""))
+
+# Add/Remove enum
+e_add_remove : Final[tuple[tuple]] = (('ADD', "Add", ""),
+                                      ('REMOVE', "Remove", ""))
+
 # Preference tabs
-e_pref_display_tab : Final[tuple[tuple]]= (('SUBMENUS', "Menus", ""),
+e_pref_display_tab : Final[tuple[tuple]] = (('SUBMENUS', "Menus", ""),
                                            ('PANELS', "Panels", ""),
                                            ('SUBMENU_BUTTONS', "Button Menus", ""),
                                            ('PANELS_IN_PROPERTIES', "Property Panel", ""))
@@ -62,3 +71,6 @@ input_classes_none : Final[str] = "The input classes are missing. (NoneType)"
 # Prefs
 prefs_keymap_do_not_remove_msg : Final[str] = "Please do not remove the keymaps."
 prefs_keymap_disable_msg : Final[str] = "Disable them instead by unchecking the box on the left."
+
+restore_selection_description : Final[str] = "Restores the selection before quick exporting.\nIf unchecked, the current selection will be the final export object and its children."
+export_wired_description : Final[str] = "Export objects that have the 'Wired' display type."

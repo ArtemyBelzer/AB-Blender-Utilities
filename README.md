@@ -57,9 +57,13 @@ Alternatively, the user can set a global, project-independent quick export direc
 
 Suppose the user wishes to remove any references to an intermediate directory in the project. In that case, the user can click the "Delete quick export attributes from scenes" in the "General" tab of the plugin preferences.
 
-#### FBX Export Settings
+#### Quick Export Settings
 
-The user can customize how the asset gets exported under the "FBX Exporter" tab of the plugin preferences. The user can pick the native FBX exporter or a custom implementation in the "Exporter Type" dropdown.
+The user can customize how the asset gets exported under the "Quick Export" tab of the plugin preferences. The user can pick the native FBX exporter or a custom implementation in the "Exporter Type" dropdown.
+
+#### Quick Export Name Collection
+
+The "Quick Export Name Collection" feature allows the user to export wired objects that begin, end, or have an occurrence of a string in their name. This name collection feature can be helpful when exporting collision objects with a mesh without having to tick "Export Wired" for quick exports. The "Quick Export Name Collection" feature is under the "Quick Export" tab in the addon properties.
 
 ### Auto/Advanced Renaming
 ![AB_Blender_Utilities_Preferences_Naming_Tab_v1 1 0](https://github.com/ArtemyBelzer/AB-Blender-Utilities/assets/143417950/706b1a21-0456-4041-ae09-80352360d325)

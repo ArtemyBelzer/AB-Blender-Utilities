@@ -36,6 +36,26 @@ class PanelVars(bpy.types.PropertyGroup):
         default = 'SUBMENUS'
     )
 
+    quick_export_name_selection : bpy.props.IntProperty(
+        description = "If a part of a child object's name is contained in this list,\nit will always be selected when exporting objects"
+    )
+
+class ABUtilQuickExportNames(bpy.types.PropertyGroup):
+    arg_type : bpy.props.EnumProperty(
+        name = "Type",
+        items = ab_constants.e_string_find_action,
+        default = 'CONTAINS'
+    )
+
+class ABUTIL_UL_name_slots(bpy.types.UIList):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+        split = layout.split(factor = 0.3)
+        split.prop(item, "name", icon = 'OBJECT_DATAMODE', emboss = False, text="")
+        split.prop(item, "arg_type")
+
+    def invoke(self, context, event):
+        pass
+
 class ABUtilAddonPrefs(bpy.types.AddonPreferences):
     bl_idname = __package__[:len(__package__)-6]
 
@@ -52,6 +72,11 @@ class ABUtilAddonPrefs(bpy.types.AddonPreferences):
     utilties_in_properties : bpy.props.BoolProperty(
         name = "Utilities in the properties panel",
         default = False
+    )
+
+    # Quick export collection property
+    quick_export_name_collection : bpy.props.CollectionProperty(
+        type = ABUtilQuickExportNames
     )
 
     # Sub-menu display
@@ -394,68 +419,80 @@ class ABUtilAddonPrefs(bpy.types.AddonPreferences):
         elif self.panel_vars_ptr.tabs == 'ADVANCED':
             self.__draw_advanced(box)
 
+    def __draw_quick_export_names(self, parent) -> None:
+        box = parent.box()
+
+        row = box.row()
+
+        row.template_list("ABUTIL_UL_name_slots", "", self, "quick_export_name_collection", self.panel_vars_ptr, "quick_export_name_selection", rows=5)
+
+        col = row.column(align=True)
+        col.operator("object.ab_add_remove_quick_export_name", icon='ADD', text="").arg = 'ADD'
+        col.operator("object.ab_add_remove_quick_export_name", icon='REMOVE', text="").arg = 'REMOVE'
+
+
     def __draw_submenu_buttons(self, parent) -> None:
-            box = parent.box()
-            box.label(text = "You can render a submenu as buttons in a pie menu by checking these boxes.")
-            box.label(text = "The parent of a submenu determines if it's rendered as buttons.")
+        box = parent.box()
+        box.label(text = "You can render a submenu as buttons in a pie menu by checking these boxes.")
+        box.label(text = "The parent of a submenu determines if it's rendered as buttons.")
 
-            parent.prop(self, "pie_menu_button_spacing_x")
-            parent.prop(self, "pie_menu_button_spacing_y")
+        parent.prop(self, "pie_menu_button_spacing_x")
+        parent.prop(self, "pie_menu_button_spacing_y")
 
-            parent.prop(self, "submenu_attributes_buttons")
-            parent.prop(self, "submenu_cleanup_buttons")
-            parent.prop(self, "submenu_colors_buttons")
-            parent.prop(self, "submenu_file_buttons")
-            parent.prop(self, "submenu_modifiers_buttons")
-            parent.prop(self, "submenu_naming_buttons")
-            parent.prop(self, "submenu_objects_buttons")
-            parent.prop(self, "submenu_point_cloud_buttons")
-            parent.prop(self, "submenu_selection_buttons")
-            parent.prop(self, "submenu_uvs_buttons")
-            parent.prop(self, "submenu_fbx_quick_export_buttons")
+        parent.prop(self, "submenu_attributes_buttons")
+        parent.prop(self, "submenu_cleanup_buttons")
+        parent.prop(self, "submenu_colors_buttons")
+        parent.prop(self, "submenu_file_buttons")
+        parent.prop(self, "submenu_modifiers_buttons")
+        parent.prop(self, "submenu_naming_buttons")
+        parent.prop(self, "submenu_objects_buttons")
+        parent.prop(self, "submenu_point_cloud_buttons")
+        parent.prop(self, "submenu_selection_buttons")
+        parent.prop(self, "submenu_uvs_buttons")
+        parent.prop(self, "submenu_fbx_quick_export_buttons")
 
     def __draw_panel_show(self, parent) -> None:
-            box = parent.box()
-            box.label(text = "You can include menus in a 3D Viewport panel.")
+        box = parent.box()
+        box.label(text = "You can include menus in a 3D Viewport panel.")
 
-            parent.prop(self, "panel_attributes_show")
-            parent.prop(self, "panel_cleanup_show")
-            parent.prop(self, "panel_colors_show")
-            parent.prop(self, "panel_file_show")
-            parent.prop(self, "panel_modifiers_show")
-            parent.prop(self, "panel_naming_show")
-            parent.prop(self, "panel_objects_show")
-            parent.prop(self, "panel_point_cloud_show")
-            parent.prop(self, "panel_selection_show")
-            parent.prop(self, "panel_uvs_show")
-            parent.prop(self, "panel_fbx_quick_export_show")
+        parent.prop(self, "panel_attributes_show")
+        parent.prop(self, "panel_cleanup_show")
+        parent.prop(self, "panel_colors_show")
+        parent.prop(self, "panel_file_show")
+        parent.prop(self, "panel_modifiers_show")
+        parent.prop(self, "panel_naming_show")
+        parent.prop(self, "panel_objects_show")
+        parent.prop(self, "panel_point_cloud_show")
+        parent.prop(self, "panel_selection_show")
+        parent.prop(self, "panel_uvs_show")
+        parent.prop(self, "panel_fbx_quick_export_show")
 
     def __draw_submenu_show(self, parent) -> None:
-            box = parent.box()
-            box.label(text = "You can exclude certain menus from appearing here.")
-            box.label(text = "Disabling the \"Attributes\" menu for example will instead render its first submenu")
-            box.label(text = " \"Colors\".")
+        box = parent.box()
+        box.label(text = "You can exclude certain menus from appearing here.")
+        box.label(text = "Disabling the \"Attributes\" menu for example will instead render its first submenu")
+        box.label(text = " \"Colors\".")
 
-            parent.prop(self, "submenu_attributes_show")
-            parent.prop(self, "submenu_cleanup_show")
-            parent.prop(self, "submenu_colors_show")
-            parent.prop(self, "submenu_file_show")
-            parent.prop(self, "submenu_modifiers_show")
-            parent.prop(self, "submenu_naming_show")
-            parent.prop(self, "submenu_objects_show")
-            parent.prop(self, "submenu_point_cloud_show")
-            parent.prop(self, "submenu_selection_show")
-            parent.prop(self, "submenu_uvs_show")
-            parent.prop(self, "submenu_fbx_quick_export_show")
+        parent.prop(self, "submenu_attributes_show")
+        parent.prop(self, "submenu_cleanup_show")
+        parent.prop(self, "submenu_colors_show")
+        parent.prop(self, "submenu_file_show")
+        parent.prop(self, "submenu_modifiers_show")
+        parent.prop(self, "submenu_naming_show")
+        parent.prop(self, "submenu_objects_show")
+        parent.prop(self, "submenu_point_cloud_show")
+        parent.prop(self, "submenu_selection_show")
+        parent.prop(self, "submenu_uvs_show")
+        parent.prop(self, "submenu_fbx_quick_export_show")
 
     def __draw_panels_in_props(self, parent) -> None:
-            box = parent.box()
-            box.label(text = "Adds panels to the properties panel.")
+        box = parent.box()
+        box.label(text = "Adds panels to the properties panel.")
 
-            parent.prop(self, "show_color_attribute_utils_in_properties")
-            parent.prop(self, "show_data_attribute_utils_in_properties")
-            parent.prop(self, "show_object_attribute_utils_in_properties")
-            parent.prop(self, "show_uv_attribute_utils_in_properties")
+        parent.prop(self, "show_color_attribute_utils_in_properties")
+        parent.prop(self, "show_data_attribute_utils_in_properties")
+        parent.prop(self, "show_object_attribute_utils_in_properties")
+        parent.prop(self, "show_uv_attribute_utils_in_properties")
 
     def __draw_advanced(self, parent) -> None:
         split = parent.split()
@@ -538,6 +575,10 @@ class ABUtilAddonPrefs(bpy.types.AddonPreferences):
         box = column.box()
         if self.fbx_exporter_type == 'NATIVE':
             box.label(text = "Native FBX Export Preferences")
+            box_naming = box.box()
+            box_naming.label(text = "Quick Export Name Collection")
+            box_naming.label(text = "Include the following objects despite their viewport display type:")
+            self.__draw_quick_export_names(box_naming)
             box.prop(self, "native_fbx_ex_scale_options")
             box.prop(self, "native_fbx_ex_mesh_smooth_type")
             box.prop(self, "native_fbx_ex_use_tspace")

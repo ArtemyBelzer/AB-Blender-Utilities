@@ -89,15 +89,53 @@ def get_selected_objects() -> tuple[bpy.types.Object]:
     """Returns an immutable list of selected objects."""
     return tuple(bpy.context.selected_objects)
 
-def select_child_objects(select_wire : bool = False) -> None:
-    """Selects all child objects in selected objects.\n
+def __select_child_objects(obj : bpy.types.Object,
+                           select_wire : bool = False,
+                           recursive : bool = False) -> None:
+    """Selects all child objects in the `obj` argument.\n
     The `select_wire` argument bypasses the `display_type` check."""
-    for obj in bpy.context.selected_objects:
-        for ch_obj in obj.children:
+    for ch_obj in obj.children:
             if ch_obj.display_type == 'TEXTURED'\
             or ch_obj.display_type == 'SOLID'\
             or select_wire:
                 ch_obj.select_set(True)
+                if len(ch_obj.children) > 0 and recursive:
+                    __select_child_objects(ch_obj, select_wire, recursive)
+
+def select_child_objects(select_wire : bool = False,
+                         recursive : bool = False,
+                         *,
+                         objects : bpy.types.Object = None) -> None:
+    """Selects all child objects in selected objects.\n
+    The `select_wire` argument bypasses the `display_type` check."""
+    if objects == None:
+        objects = bpy.context.selected_objects
+        
+    for obj in objects:
+        __select_child_objects(obj, select_wire, recursive)
+
+def get_child_objects(obj : bpy.types.Object,
+                      select_wire : bool = False,
+                      recursive : bool = False) -> list[bpy.types.Object]:
+    """Gets all child objects in the `obj` argument.\n
+    The `select_wire` argument bypasses the `display_type` check."""
+    children : list[bpy.types.Object] = []
+    for ch_obj in obj.children:
+            if ch_obj.display_type == 'TEXTURED'\
+            or ch_obj.display_type == 'SOLID'\
+            or select_wire:
+                children.append(ch_obj)
+                if len(ch_obj.children) > 0 and recursive:
+                    children += get_child_objects(ch_obj, select_wire, recursive)
+    return children
+        
+
+def select_objects(targets : list[bpy.types.Object] | tuple[bpy.types.Object]) -> None:
+    """Selects target objects."""
+    for obj in targets:
+        # Selection
+        if obj:
+            obj.select_set(True)
 
 def deselect_all() -> None:
     """Deselects all objects."""

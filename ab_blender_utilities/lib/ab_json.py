@@ -44,10 +44,12 @@ def dump_pc_data(data : list) -> str:
     for point in data:
         location : tuple(float) = getattr(point, "location")  # location
         rotation : tuple(float) = getattr(point, "rotation")  # rotation
+        scale : tuple(float) = getattr(point, "scale")  # scale
         asset_path : str = getattr(point, "asset_path") if len(getattr(point, "asset_path")) < 4096 else ""  # asset path
 
         point_data_d : dict = {"location" : location,
                                "rotation" : rotation,
+                               "scale" : scale,
                                "asset_path" : asset_path}
         
         point_cloud_d["point_cloud"].append(point_data_d)
@@ -68,9 +70,10 @@ def load_pc_data(json_data : str) -> list | None:
     for point in point_cloud_d["point_cloud"]:
         location : tuple = tuple(point["location"])
         rotation : tuple = tuple(point["rotation"])
+        scale : tuple = tuple(point["scale"])
         asset_path : str = point["asset_path"]
         
-        data.append((location, rotation, asset_path))
+        data.append((location, rotation, scale, asset_path))
     
     return data
     

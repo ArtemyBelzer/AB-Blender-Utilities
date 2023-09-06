@@ -16,6 +16,7 @@
 
 import bpy
 import re
+from .ab_common import pad_index, get_child_objects
 
 def object_name_variables(obj : bpy.types.Object, value : str, index_str : str) -> str:
     # The existing name of the current object
@@ -55,3 +56,15 @@ def object_name_variables(obj : bpy.types.Object, value : str, index_str : str) 
                 print("Incorrect parameter")
             value = value.replace(replace_args[0], replace_args[1])
     return value
+
+def rename_child_objects(obj : bpy.types.Object,
+                         name: str,
+                         alias : str,
+                         rename_wireframe : bool,
+                         recursive : bool) -> None:
+    """Renames the `children` of the `obj` argument with the `name`, the index, and `alias`."""
+    children : list[bpy.types.Object] = get_child_objects(obj, rename_wireframe, recursive)
+    for i, ch_obj in enumerate(children):
+        ch_obj.name = f"{name}_pt{pad_index(i+1)}{alias}"
+        if ch_obj.data:
+            ch_obj.data.name = ch_obj.name
