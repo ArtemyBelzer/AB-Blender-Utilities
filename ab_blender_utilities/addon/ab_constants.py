@@ -39,6 +39,10 @@ e_pref_tab : Final[tuple[tuple]] = (('GENERAL', "General", ""),
                                    ('QUICK_EXPORT', "Quick Export", ""),
                                    ('ADVANCED', "Advanced", ""))
 
+# Selection
+e_selection : Final[tuple[tuple]] = (('SELECTED', "Selected", ""),
+                                     ('ALL', "All", ""))
+
 # String find action
 e_string_find_action : Final[tuple[tuple]] = (('CONTAINS', "Contains", ""),
                                               ('BEGINS_WITH', "Begins with", ""),

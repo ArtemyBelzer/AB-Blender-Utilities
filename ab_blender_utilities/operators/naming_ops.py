@@ -15,8 +15,16 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
+import string
+import re
+from bl_operators import wm
 from ..lib import ab_common, ab_naming_extra
 from ..addon import ab_constants, ab_persistent
+from bpy.app.translations import (
+    pgettext_iface as iface_,
+    pgettext_tip as tip_,
+    contexts as i18n_contexts,
+)
 
 
 class CategoryNaming(ab_common.Category):
@@ -75,38 +83,49 @@ class OpABUpdateMeshData(bpy.types.Operator, CategoryNaming):
                         
         return {'FINISHED'}
     
-class OpABFindAndReplaceInName(bpy.types.Operator, CategoryNaming):
-    """Finds and replaces a part of a name"""
-    bl_idname = "wm.ab_find_and_replace_in_name"
-    bl_label = "Find and replace in object name"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    obj_find_name : bpy.props.StringProperty(
-        name = "Find",
-        default = "",
+# ABBatchRenameAction based on wm.BatchRenameAction from Blender
+# GitHub Repo: https://github.com/blender/blender/
+# Based on: https://github.com/blender/blender/blob/main/scripts/startup/bl_operators/wm.py
+class ABBatchRenameAction(wm.BatchRenameAction):
+    # category: StringProperty()
+    type: bpy.props.EnumProperty(
+        name="Operation",
+        items=(
+            ('REPLACE', "Find/Replace", "Replace text in the name"),
+            ('SET', "Set Name", "Set a new name or prefix/suffix the existing one"),
+            ('STRIP', "Strip Characters", "Strip leading/trailing text from the name"),
+            ('CASE', "Change Case", "Change case of each name"),
+            ('NUMBER', "Item Number", "The user can get the selected item number and either replace the name with the number or add it as a prefix/suffix."),
+            ('TYPE', "Object Type", "The user can get the current object type and either replace the name with the type or add it as a prefix/suffix."),
+            ('SPLITTER', "Splitter", "Adds a splitter to the name"),
+            ('ACTIVE', "Active Object", "The user can get the current active object and either replace the name with the active object's name or add it as a prefix/suffix."),
+            ('UTIL_EXPR', "Utilities Expression", "Custom expression from AB Utilities. The syntax is from the old Auto/Advanced Rename tool.")
+        ),
+        default = 'SET'
     )
 
-    obj_replace_name : bpy.props.StringProperty(
-        name = "Replace",
-        default = "",
+    # type: 'SET'.
+    set_name: bpy.props.StringProperty(name="Name")
+    set_method: bpy.props.EnumProperty(
+        name="Method",
+        items=(
+            ('NEW', "New", ""),
+            ('PREFIX', "Prefix", ""),
+            ('SUFFIX', "Suffix", "")
+        ),
+        default='NEW',
     )
 
-    def execute(self, context):
-        for obj in bpy.context.selected_objects:
-            obj.name = obj.name.replace(self.obj_find_name, self.obj_replace_name)
-            if obj.data:
-                obj.data.name = obj.name     
-                        
-        return {'FINISHED'}
-    
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self)
-    
-class OpABAutoRename(bpy.types.Operator, CategoryNaming):
-    """Auto renames objects"""
-    bl_idname = "wm.ab_auto_rename"
-    bl_label = "Auto/Advanced Rename"
+# Batch Rename+ based on Batch Rename (wm.WM_OT_batch_rename) from Blender
+# GitHub Repo: https://github.com/blender/blender/
+# Based on: https://github.com/blender/blender/blob/main/scripts/startup/bl_operators/wm.py
+class OpABBatchRenamePlus(wm.WM_OT_batch_rename, CategoryNaming):
+    """Rename multiple items at once.\nThis operator includes extended functionality"""
+    bl_idname = "wm.ab_batch_rename_plus"
+    bl_label = "Batch Rename+"
     bl_options = {'REGISTER', 'UNDO'}
+
+    # Old naming menu
 
     obj_name : bpy.props.StringProperty(
         name = "New Name",
@@ -116,11 +135,6 @@ class OpABAutoRename(bpy.types.Operator, CategoryNaming):
     obj_name_suffix : bpy.props.StringProperty(
         name = "Suffix",
         default = "",
-    )
-
-    rename_obj_data : bpy.props.BoolProperty(
-        name = "Rename Object Data",
-        default = True
     )
 
     obj_num_splitter : bpy.props.BoolProperty(
@@ -133,7 +147,21 @@ class OpABAutoRename(bpy.types.Operator, CategoryNaming):
         default = ""
     )
 
-    padding : bpy.props.IntProperty(
+    use_custom_numbering : bpy.props.BoolProperty(
+        name = "Use custom numbering convention",
+        default = False,
+        description = "When checked, the Batch Rename+ tool will use a custom numbering convention (ie. \"_##\" vs the regular \".###\")."
+    )
+
+    name_splitter : bpy.props.StringProperty(
+        name = "Name Splitter",
+        default = "_",
+        description = "Splitter that is used for auto naming.\n\
+        Ex: \"ObjectName<splitter>01\", \
+        \"ObjectName<splitter>02\""
+    )
+
+    num_padding : bpy.props.IntProperty(
         name = "Zero Padding Count",
         default = 1
     )
@@ -142,13 +170,147 @@ class OpABAutoRename(bpy.types.Operator, CategoryNaming):
         default = False
     )
 
-    def execute(self, context):
+    rename_data : bpy.props.BoolProperty(
+        name = "Rename Data",
+        default = True
+    )
+
+    use_a_splitter_between_actions : bpy.props.BoolProperty(
+        name = "Use a splitter between actions",
+        default = False,
+        description = "Adds a splitter between batch naming actions"
+    )
+
+    actions: bpy.props.CollectionProperty(type=ABBatchRenameAction)
+
+    adv_menu_state : bpy.props.BoolProperty(
+        name = "Advanced Menu",
+        default = False
+    )
+
+    def _add_splitter(self,
+                      idx : int) -> str:
+        if self.use_a_splitter_between_actions:
+            return self.name_splitter
+        return ""
+
+    def _apply_actions(self,
+                       actions : ABBatchRenameAction,
+                       name : str,
+                       idx : int,
+                       item : bpy.types.Object,
+                       item_count : int) -> str:
+        for i, action in enumerate(actions):
+            ty = action.type
+            if ty == 'SET':
+                text = action.set_name
+                method = action.set_method
+                if method == 'NEW':
+                    name = text
+                elif method == 'PREFIX':
+                    name = text + self._add_splitter(i) + name
+                elif method == 'SUFFIX':
+                    name = name + self._add_splitter(i) + text
+                else:
+                    assert 0
+
+            elif ty == 'STRIP':
+                chars = action.strip_chars
+                chars_strip = (
+                    "%s%s%s"
+                ) % (
+                    string.punctuation if 'PUNCT' in chars else "",
+                    string.digits if 'DIGIT' in chars else "",
+                    " " if 'SPACE' in chars else "",
+                )
+                part = action.strip_part
+                if 'START' in part:
+                    name = name.lstrip(chars_strip)
+                if 'END' in part:
+                    name = name.rstrip(chars_strip)
+
+            elif ty == 'REPLACE':
+                if action.use_replace_regex_src:
+                    replace_src = action.replace_src
+                    if action.use_replace_regex_dst:
+                        replace_dst = action.replace_dst
+                    else:
+                        replace_dst = action.replace_dst.replace("\\", "\\\\")
+                else:
+                    replace_src = re.escape(action.replace_src)
+                    replace_dst = action.replace_dst.replace("\\", "\\\\")
+                name = re.sub(
+                    replace_src,
+                    replace_dst,
+                    name,
+                    flags=(
+                        0 if action.replace_match_case else
+                        re.IGNORECASE
+                    ),
+                )
+            elif ty == 'CASE':
+                method = action.case_method
+                if method == 'UPPER':
+                    name = name.upper()
+                elif method == 'LOWER':
+                    name = name.lower()
+                elif method == 'TITLE':
+                    name = name.title()
+                else:
+                    assert 0
+            elif ty == 'NUMBER':
+                index_str = ab_common.pad_index(idx+1, self.num_padding)
+                method = action.set_method
+                if method == 'NEW':
+                    name = index_str
+                elif method == 'PREFIX':
+                    name = item.type + self._add_splitter(i) + index_str
+                elif method == 'SUFFIX':
+                    name = index_str + self._add_splitter(i) + item.type
+                else:
+                    assert 0
+            elif ty == 'TYPE':
+                method = action.set_method
+                if method == 'NEW':
+                    name = item.type
+                elif method == 'PREFIX':
+                    name = item.type + self._add_splitter(i) + name
+                elif method == 'SUFFIX':
+                    name = name + self._add_splitter(i) + item.type
+                else:
+                    assert 0
+            elif ty == 'SPLITTER':
+                name += self.name_splitter
+            elif ty == 'ACTIVE':
+                active = bpy.context.active_object.name
+                method = action.set_method
+                if method == 'NEW':
+                    name = active
+                elif method == 'PREFIX':
+                    name = active + self._add_splitter(i) + name
+                elif method == 'SUFFIX':
+                    name = name + self._add_splitter(i) + active
+                else:
+                    assert 0
+            elif ty == 'UTIL_EXPR':
+                text = action.set_name
+                index_str : str = ab_common.pad_index(idx+1, self.num_padding)
+                name = ab_naming_extra.object_name_variables(item, text, index_str)
+            else:
+                assert 0
+
+        if self.use_custom_numbering and item_count > 1:
+            index_str : str = ab_common.pad_index(idx+1, self.num_padding)
+            name = name + self.name_splitter + index_str
+        return name
+
+    def __old_execute(self, context):
         name_splitter = ""
         if self.obj_num_splitter:
-            name_splitter = ab_persistent.get_preferences().name_splitter
+            name_splitter = self.name_splitter
         
         for i, obj in enumerate(bpy.context.selected_objects):
-            index_str : str = ab_common.pad_index(i+1, self.padding)
+            index_str : str = ab_common.pad_index(i+1, self.num_padding)
             object_name : str = ab_naming_extra.object_name_variables(obj, self.obj_name, index_str)
             obj.name = object_name if len(bpy.context.selected_objects) == 1\
                 or "$no_index" in self.obj_name\
@@ -160,16 +322,90 @@ class OpABAutoRename(bpy.types.Operator, CategoryNaming):
             
             if obj.data and self.rename_obj_data:
                 obj.data.name = obj.name
-                        
+            
         return {'FINISHED'}
     
+    def _execute(self, context):
+        seq, attr, descr = self._data
+
+        actions = self.actions
+
+        # Sanitize actions.
+        for action in actions:
+            if action.use_replace_regex_src:
+                try:
+                    re.compile(action.replace_src)
+                except BaseException as ex:
+                    self.report({'ERROR'}, "Invalid regular expression (find): " + str(ex))
+                    return {'CANCELLED'}
+
+                if action.use_replace_regex_dst:
+                    try:
+                        re.sub(action.replace_src, action.replace_dst, "")
+                    except BaseException as ex:
+                        self.report({'ERROR'}, "Invalid regular expression (replace): " + str(ex))
+                        return {'CANCELLED'}
+
+        total_len = 0
+        change_len = 0
+        for i, item in enumerate(seq):
+            name_src = getattr(item, attr)
+            name_dst = self._apply_actions(actions, name_src, i, item, len(seq))
+            if name_src != name_dst:
+                setattr(item, attr, name_dst)
+                if self.rename_data:
+                    if hasattr(item, "data"):
+                        item.data.name = name_dst
+                change_len += 1
+            total_len += 1
+
+        self.report({'INFO'}, tip_("Renamed %d of %d %s") % (change_len, total_len, descr))
+
+        return {'FINISHED'}
+
+    def execute(self, context):
+        if not ab_persistent.get_preferences().old_advanced_rename_menu:
+            return self._execute(context)
+        else:
+            return self.__old_execute(context)
+    
     def invoke(self, context, event):
+        self._data_update(context)
+
+        if not self.actions:
+            self.actions.add()
         if not self.default_loaded:
-            self.padding = ab_persistent.get_preferences().name_padding
+            prefs : bpy.types.AddonPreferences = ab_persistent.get_preferences()
+            self.use_custom_numbering = prefs.use_custom_numbering
+            self.num_padding = prefs.num_padding
+            self.name_splitter = prefs.name_splitter
+            self.use_a_splitter_between_actions = prefs.use_a_splitter_between_actions
+            self.type = 'SET'
             self.default_loaded = True
-        return context.window_manager.invoke_props_dialog(self)
-        
-    def draw(self, context):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self, width=400)
+    
+    def _advanced_menu(self, layout : bpy.types.UILayout) -> None:
+        adv_menu_box = layout.box()
+        row = adv_menu_box.row()
+        row.prop(self,
+                 "adv_menu_state",
+                 icon = 'TRIA_DOWN' if self.adv_menu_state else 'TRIA_RIGHT',
+                 icon_only = True,
+                 emboss = False)
+        row.label(text = "Advanced")
+
+        if self.adv_menu_state:
+            prefs : bpy.types.AddonPreferences = ab_persistent.get_preferences()
+
+            col = adv_menu_box.column()
+            col.prop(self, "rename_data")
+            col.prop(self, "use_custom_numbering")
+            col.prop(self, "name_splitter")
+            col.prop(self, "num_padding")
+            col.prop(self, "use_a_splitter_between_actions")
+    
+    def __draw_old_menu(self, context) -> None:
         selected_objects : list[bpy.types.Object] = bpy.context.selected_objects
         active_object : bpy.types.Object = bpy.context.active_object
 
@@ -180,7 +416,7 @@ class OpABAutoRename(bpy.types.Operator, CategoryNaming):
 
         settings_box = layout.box()
 
-        settings_box.prop(self, "rename_obj_data")
+        settings_box.prop(self, "rename_data")
         settings_box.prop(self, "obj_num_splitter")
         settings_box.prop(self, "padding")
 
@@ -195,6 +431,164 @@ class OpABAutoRename(bpy.types.Operator, CategoryNaming):
         # box.prop(self, "active_object_display", emboss = False, text = "Active Object: ")
         box.label(text = f"Active Object: {active_object.name}")
         box.enabled = False
+
+    
+
+    def __draw_menu(self, context) -> None:
+        """Menu akin to the one built into Blender"""
+        layout = self.layout
+
+        split = layout.split(align=True)
+        split.row(align=True).prop(self, "data_source", expand=True)
+        split.prop(self, "data_type", text="")
+
+        for action in self.actions:
+            box = layout.box()
+            split = box.split(factor=0.87)
+
+            # Column 1: main content.
+            col = split.column()
+
+            # Label's width.
+            fac = 0.25
+
+            # Row 1: type.
+            row = col.split(factor=fac)
+            row.alignment = 'RIGHT'
+            row.label(text="Type")
+            row.prop(action, "type", text="")
+
+            ty = action.type
+            if ty == 'SET':
+                # Row 2: method.
+                row = col.split(factor=fac)
+                row.alignment = 'RIGHT'
+                row.label(text="Method")
+                row.row().prop(action, "set_method", expand=True)
+
+                # Row 3: name.
+                row = col.split(factor=fac)
+                row.alignment = 'RIGHT'
+                row.label(text="Name")
+                row.prop(action, "set_name", text="")
+
+            elif ty == 'STRIP':
+                # Row 2: chars.
+                row = col.split(factor=fac)
+                row.alignment = 'RIGHT'
+                row.label(text="Characters")
+                row.row().prop(action, "strip_chars")
+
+                # Row 3: part.
+                row = col.split(factor=fac)
+                row.alignment = 'RIGHT'
+                row.label(text="Strip From")
+                row.row().prop(action, "strip_part")
+
+            elif ty == 'REPLACE':
+                # Row 2: find.
+                row = col.split(factor=fac)
+
+                re_error_src = None
+                if action.use_replace_regex_src:
+                    try:
+                        re.compile(action.replace_src)
+                    except BaseException as ex:
+                        re_error_src = str(ex)
+                        row.alert = True
+
+                row.alignment = 'RIGHT'
+                row.label(text="Find")
+                sub = row.row(align=True)
+                sub.prop(action, "replace_src", text="")
+                sub.prop(action, "use_replace_regex_src", text="", icon='SORTBYEXT')
+
+                # Row.
+                if re_error_src is not None:
+                    row = col.split(factor=fac)
+                    row.label(text="")
+                    row.alert = True
+                    row.label(text=re_error_src)
+
+                # Row 3: replace.
+                row = col.split(factor=fac)
+
+                re_error_dst = None
+                if action.use_replace_regex_src:
+                    if action.use_replace_regex_dst:
+                        if re_error_src is None:
+                            try:
+                                re.sub(action.replace_src, action.replace_dst, "")
+                            except BaseException as ex:
+                                re_error_dst = str(ex)
+                                row.alert = True
+
+                row.alignment = 'RIGHT'
+                row.label(text="Replace")
+                sub = row.row(align=True)
+                sub.prop(action, "replace_dst", text="")
+                subsub = sub.row(align=True)
+                subsub.active = action.use_replace_regex_src
+                subsub.prop(action, "use_replace_regex_dst", text="", icon='SORTBYEXT')
+
+                # Row.
+                if re_error_dst is not None:
+                    row = col.split(factor=fac)
+                    row.label(text="")
+                    row.alert = True
+                    row.label(text=re_error_dst)
+
+                # Row 4: case.
+                row = col.split(factor=fac)
+                row.label(text="")
+                row.prop(action, "replace_match_case")
+
+            elif ty == 'CASE':
+                # Row 2: method.
+                row = col.split(factor=fac)
+                row.alignment = 'RIGHT'
+                row.label(text="Convert To")
+                row.row().prop(action, "case_method", expand=True)
+
+            elif ty == 'NUMBER':
+                row = col.split(factor=fac)
+                row.alignment = 'RIGHT'
+                row.label(text="Method")
+                row.row().prop(action, "set_method", expand=True)
+
+            elif ty == 'TYPE':
+                row = col.split(factor=fac)
+                row.alignment = 'RIGHT'
+                row.label(text="Method")
+                row.row().prop(action, "set_method", expand=True)
+            
+            elif ty == 'ACTIVE':
+                row = col.split(factor=fac)
+                row.alignment = 'RIGHT'
+                row.label(text="Method")
+                row.row().prop(action, "set_method", expand=True)
+
+            elif ty == 'UTIL_EXPR':
+                row = col.split(factor=fac)
+                row.alignment = 'RIGHT'
+                row.label(text="Name")
+                row.prop(action, "set_name", text="")
+
+            # Column 2: add-remove.
+            row = split.split(align=True)
+            row.prop(action, "op_remove", text="", icon='REMOVE')
+            row.prop(action, "op_add", text="", icon='ADD')
+
+        layout.label(text=iface_("Rename %d %s") % (len(self._data[0]), self._data[2]), translate=False)
+        layout = self.layout
+        self._advanced_menu(layout)
+        
+    def draw(self, context):
+        if not ab_persistent.get_preferences().old_advanced_rename_menu:
+            self.__draw_menu(context)
+        else:
+            self.__draw_old_menu(context)
+            
 
 class OpABAppendBooleanOperationToName(bpy.types.Operator, ab_common.Category):
     """Reorders object data alphabetically.\nUseful for the FBX export order"""
@@ -219,8 +613,8 @@ class OpABAppendBooleanOperationToName(bpy.types.Operator, ab_common.Category):
         
         return {'FINISHED'}
 
-OPERATORS : tuple[bpy.types.Operator] = (OpABAutoRename,
-                                         OpABFindAndReplaceInName,
+PROPERTIES : tuple[bpy.types.PropertyGroup] = (ABBatchRenameAction,)
+OPERATORS : tuple[bpy.types.Operator] = (OpABBatchRenamePlus,
                                          OpABObjectNamesFromParent,
                                          OpABUpdateMeshData,
                                          OpABAppendBooleanOperationToName)

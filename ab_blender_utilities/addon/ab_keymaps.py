@@ -77,11 +77,11 @@ def register(classes : tuple | list = ()) -> None:
     else:
         km = kc.keymaps.new(name="Window")
 
-    km_auto_rename : bpy.types.KeyMapItem = km.keymap_items.new(idname = "wm.ab_auto_rename",
+    km_auto_rename : bpy.types.KeyMapItem = km.keymap_items.new(idname = "wm.ab_batch_rename_plus",
                                                     type = 'F2',
                                                     value = 'PRESS',
-                                                    ctrl = False,
-                                                    alt = True,
+                                                    ctrl = True,
+                                                    alt = False,
                                                     shift = False)
     __loaded_keymaps__.append((km, km_auto_rename))
 

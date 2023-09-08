@@ -19,6 +19,8 @@ import rna_keymap_ui
 from . import ab_constants, ab_keymaps, ab_op_menus
 from ..lib import ab_fbx
 
+UPDATE_UI : callable = None
+
 def change_pie_menu_label(prefs : bpy.types.AddonPreferences, context : any) -> None:
     new_label : str = ab_constants.plugin_menu_name + (" Pie " if not prefs.alternative_menu else " ") + "Menu"
     ab_op_menus.OBJECT_MT_ab_utility_base_menu_pie.change_bl_label(new_label)
@@ -77,6 +79,12 @@ class ABUtilAddonPrefs(bpy.types.AddonPreferences):
     # Quick export collection property
     quick_export_name_collection : bpy.props.CollectionProperty(
         type = ABUtilQuickExportNames
+    )
+
+    # Old advanced rename menu
+    old_advanced_rename_menu : bpy.props.BoolProperty(
+        name = "Old Advanced Rename Menu",
+        default = False
     )
 
     # Sub-menu display
@@ -279,6 +287,18 @@ class ABUtilAddonPrefs(bpy.types.AddonPreferences):
         description = "Loads all the sub panels under the plugin's category."
     )
 
+    use_custom_numbering : bpy.props.BoolProperty(
+        name = "Use custom numbering convention",
+        default = False,
+        description = "When checked, the Batch Rename+ tool will use a custom numbering convention (ie. \"_##\" vs the regular \".###\")."
+    )
+
+    use_a_splitter_between_actions : bpy.props.BoolProperty(
+        name = "Use a splitter between actions",
+        default = False,
+        description = "Adds a splitter between batch naming actions"
+    )
+
     name_splitter : bpy.props.StringProperty(
         name = "Name Splitter",
         default = "_",
@@ -287,7 +307,7 @@ class ABUtilAddonPrefs(bpy.types.AddonPreferences):
         \"ObjectName<splitter>02\""
     )
 
-    name_padding : bpy.props.IntProperty(
+    num_padding : bpy.props.IntProperty(
         name = "Zero Padding Count",
         default = 1
     )
@@ -398,10 +418,10 @@ class ABUtilAddonPrefs(bpy.types.AddonPreferences):
         default = True,
         description = "Automatically adds in missing keymaps from the user keyconfig."
     )
-
     
     def draw(self, context) -> None:
         layout = self.layout  # bpy.types.UILayout
+        
         column = layout.column(align=True)
         row = column.row()
         row.prop(self.panel_vars_ptr, "tabs", expand=True)
@@ -409,7 +429,7 @@ class ABUtilAddonPrefs(bpy.types.AddonPreferences):
         box = column.box()
 
         if self.panel_vars_ptr.tabs == 'GENERAL':
-            self.__draw_general(box)
+            self.__draw_general(context, box)
         elif self.panel_vars_ptr.tabs == 'NAMING':
             self.__draw_naming(box)
         elif self.panel_vars_ptr.tabs == 'KEYS':
@@ -505,35 +525,40 @@ class ABUtilAddonPrefs(bpy.types.AddonPreferences):
         column.label(text = self.bl_rna.properties["auto_re_add_missing_keymaps"].description)
         column.prop(self, "load_viewport_panel")
         column.label(text = self.bl_rna.properties["load_viewport_panel"].description)
+        column.prop(self, "old_advanced_rename_menu")
 
-    def __draw_general(self, parent) -> None:
+    def __draw_general(self, context, parent) -> None:
         split = parent.split()
         box = split.box()
         box.label(text = "General Preferences")
+
+        # Update UI
+        if UPDATE_UI != None:
+            UPDATE_UI(self, context, box)
+
         box_exporting = box.box()
         box_exporting.label(text = "Quick Export")
-        box.prop(self, "uses_default_export_path")
+        box_exporting.prop(self, "uses_default_export_path")
         if self.uses_default_export_path:
-            box.prop(self, "default_export_path")
-        box.operator("wm.ab_delete_scene_quick_export_paths")
+            box_exporting.prop(self, "default_export_path")
+        box_exporting.operator("wm.ab_delete_scene_quick_export_paths")
 
         box_properties = box.box()
         box_properties.label(text = "Property Panel")
 
-        box.prop(self, "utilties_in_properties")
+        box_properties.prop(self, "utilties_in_properties")
 
         box_alternative_menu = box.box()
         box_alternative_menu.label(text = "Alternative Menu")
 
-        box.prop(self, "alternative_menu")
+        box_alternative_menu.prop(self, "alternative_menu")
 
         box_menus = box.box()
         box_menus.label(text = "Display Settings")
 
-        row = box.row()
+        row = box_menus.row()
         row.prop(self.panel_vars_ptr, "menu_display_tabs", expand=True)
-
-        box_menus = box.box()
+        
         if self.panel_vars_ptr.menu_display_tabs == 'SUBMENUS':
             self.__draw_submenu_show(box_menus)
         elif self.panel_vars_ptr.menu_display_tabs == 'PANELS':
@@ -548,8 +573,12 @@ class ABUtilAddonPrefs(bpy.types.AddonPreferences):
         split = parent.split()
         box = split.box()
         box.label(text = "Naming Preferences")
-        box.prop(self, "name_splitter")
-        box.prop(self, "name_padding")
+        box_numbering = box.box()
+        box_numbering.label(text = "Custom Numbering Conventions")
+        box_numbering.prop(self, "use_custom_numbering")
+        box_numbering.prop(self, "name_splitter")
+        box_numbering.prop(self, "num_padding")
+        box_numbering.prop(self, "use_a_splitter_between_actions")
 
     def __draw_keymaps(self, parent) -> None:
         split = parent.split()
@@ -593,3 +622,7 @@ class ABUtilAddonPrefs(bpy.types.AddonPreferences):
             box.prop(self, "native_fbx_ex_check_existing")
         elif self.fbx_exporter_type == 'CUSTOM':
             box.label(text = "A custom exporter can be implemented inside `operators\\file_ops\\file_ops_custom.py`.")
+
+    @classmethod
+    def set_update_ui_function(cls, function : callable) -> None:
+        cls.update_ui_function = function
