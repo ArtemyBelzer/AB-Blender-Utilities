@@ -111,7 +111,11 @@ class SingletonUpdater:
         self._addon_package = __package__  # Must not change.
         self._updater_path = os.path.join(
             os.path.dirname(__file__), self._addon + "_updater")
-        self._addon_root = os.path.dirname(__file__)
+        
+        for module in addon_utils.modules():
+            if module.bl_info["name"] == "Artemy Belzer's Blender Utilities":
+                self._addon_root = os.path.split(module.__file__)[0]
+        # os.path.dirname(__file__)
         self._json = dict()
         self._error = None
         self._error_msg = None
