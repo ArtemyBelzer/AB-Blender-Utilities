@@ -95,6 +95,7 @@ The "Quick Export Name Collection" feature allows the user to export wired objec
 The plugin offers functionality to perform essential bulk attribute, colour, and UV operations on multiple objects. You can set the currently active UV map, rename a colour attribute on various objects, etc.
 
 If the "Deselect Invalid" checkbox is present, the operator will deselect objects that do not contain the attribute post-operation.
+
 ![AB_Blender_Utilities_Delete_UV_Channel](https://github.com/ArtemyBelzer/Artemy-Belzers-Blender-Utilities/assets/143417950/184cd50e-5f3c-4233-a53c-206d569bfd96)
 
 ![AB_Blender_Utilities_Rename_UV_Channel](https://github.com/ArtemyBelzer/Artemy-Belzers-Blender-Utilities/assets/143417950/2ed05bb0-7acd-469b-ab28-4992690fb127)
