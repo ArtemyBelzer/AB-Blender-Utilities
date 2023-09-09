@@ -287,8 +287,8 @@ class ABUtilAddonPrefs(bpy.types.AddonPreferences):
         description = "Loads all the sub panels under the plugin's category."
     )
 
-    use_custom_numbering : bpy.props.BoolProperty(
-        name = "Use custom numbering convention",
+    auto_numbering : bpy.props.BoolProperty(
+        name = "Auto numbering",
         default = False,
         description = "When checked, the Batch Rename+ tool will use a custom numbering convention (ie. \"_##\" vs the regular \".###\")."
     )
@@ -575,7 +575,7 @@ class ABUtilAddonPrefs(bpy.types.AddonPreferences):
         box.label(text = "Naming Preferences")
         box_numbering = box.box()
         box_numbering.label(text = "Custom Numbering Conventions")
-        box_numbering.prop(self, "use_custom_numbering")
+        box_numbering.prop(self, "auto_numbering")
         box_numbering.prop(self, "name_splitter")
         box_numbering.prop(self, "num_padding")
         box_numbering.prop(self, "use_a_splitter_between_actions")

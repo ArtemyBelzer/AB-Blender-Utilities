@@ -147,8 +147,8 @@ class OpABBatchRenamePlus(wm.WM_OT_batch_rename, CategoryNaming):
         default = ""
     )
 
-    use_custom_numbering : bpy.props.BoolProperty(
-        name = "Use custom numbering convention",
+    auto_numbering : bpy.props.BoolProperty(
+        name = "Auto numbering",
         default = False,
         description = "When checked, the Batch Rename+ tool will use a custom numbering convention (ie. \"_##\" vs the regular \".###\")."
     )
@@ -159,6 +159,17 @@ class OpABBatchRenamePlus(wm.WM_OT_batch_rename, CategoryNaming):
         description = "Splitter that is used for auto naming.\n\
         Ex: \"ObjectName<splitter>01\", \
         \"ObjectName<splitter>02\""
+    )
+
+    use_unique_num_splitter : bpy.props.BoolProperty(
+        name = "Unique Splitter",
+        default = False
+    )
+
+    num_splitter : bpy.props.StringProperty(
+        name = "Number Splitter",
+        default = ".",
+        description = "Splitter that is used for numbers."
     )
 
     num_padding : bpy.props.IntProperty(
@@ -189,9 +200,11 @@ class OpABBatchRenamePlus(wm.WM_OT_batch_rename, CategoryNaming):
     )
 
     def _add_splitter(self,
-                      idx : int) -> str:
+                      idx : int,
+                      *,
+                      is_number : bool = False) -> str:
         if self.use_a_splitter_between_actions:
-            return self.name_splitter
+            return self.num_splitter if is_number and self.use_unique_num_splitter else self.name_splitter
         return ""
 
     def _apply_actions(self,
@@ -264,9 +277,9 @@ class OpABBatchRenamePlus(wm.WM_OT_batch_rename, CategoryNaming):
                 if method == 'NEW':
                     name = index_str
                 elif method == 'PREFIX':
-                    name = item.type + self._add_splitter(i) + index_str
+                    name = item.type + self._add_splitter(i, is_number = True) + index_str
                 elif method == 'SUFFIX':
-                    name = index_str + self._add_splitter(i) + item.type
+                    name = index_str + self._add_splitter(i, is_number = True) + item.type
                 else:
                     assert 0
             elif ty == 'TYPE':
@@ -299,9 +312,9 @@ class OpABBatchRenamePlus(wm.WM_OT_batch_rename, CategoryNaming):
             else:
                 assert 0
 
-        if self.use_custom_numbering and item_count > 1:
+        if self.auto_numbering and item_count > 1:
             index_str : str = ab_common.pad_index(idx+1, self.num_padding)
-            name = name + self.name_splitter + index_str
+            name = name + self.num_splitter + index_str if self.use_unique_num_splitter else name + self.name_splitter + index_str
         return name
 
     def __old_execute(self, context):
@@ -376,7 +389,7 @@ class OpABBatchRenamePlus(wm.WM_OT_batch_rename, CategoryNaming):
             self.actions.add()
         if not self.default_loaded:
             prefs : bpy.types.AddonPreferences = ab_persistent.get_preferences()
-            self.use_custom_numbering = prefs.use_custom_numbering
+            self.auto_numbering = prefs.auto_numbering
             self.num_padding = prefs.num_padding
             self.name_splitter = prefs.name_splitter
             self.use_a_splitter_between_actions = prefs.use_a_splitter_between_actions
@@ -399,11 +412,20 @@ class OpABBatchRenamePlus(wm.WM_OT_batch_rename, CategoryNaming):
             prefs : bpy.types.AddonPreferences = ab_persistent.get_preferences()
 
             col = adv_menu_box.column()
-            col.prop(self, "rename_data")
-            col.prop(self, "use_custom_numbering")
-            col.prop(self, "name_splitter")
-            col.prop(self, "num_padding")
+            col.label(text = "Actions:")
             col.prop(self, "use_a_splitter_between_actions")
+            col.separator()
+            col.label(text = "Naming:")
+            col.prop(self, "rename_data")
+            col.prop(self, "name_splitter")
+            col.separator()
+            col.label(text = "Numbering:")
+            col.prop(self, "auto_numbering")
+            row = col.row()
+            row.prop(self, "num_padding")
+            row.prop(self, "use_unique_num_splitter")
+            if self.use_unique_num_splitter:
+                col.prop(self, "num_splitter")
     
     def __draw_old_menu(self, context) -> None:
         selected_objects : list[bpy.types.Object] = bpy.context.selected_objects
