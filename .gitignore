@@ -1,1 +1,3 @@
 __pycache__/
+*.addon_updater/
+*.addon_updater_status.json

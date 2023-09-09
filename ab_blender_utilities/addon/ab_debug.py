@@ -23,3 +23,5 @@ skip_loading_properties : Final[bool] = False
 skip_loading_operators : Final[bool] = False
 skip_loading_importers : Final[bool] = False
 skip_loading_exporters : Final[bool] = False
+simulate_update_presence : Final[bool] = False
+skip_loading_updater : Final[bool] = False

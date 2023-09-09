@@ -18,7 +18,7 @@ from typing import Final
 
 # General
 plugin_name_short : Final[str] = "AB Utilities"
-plugin_menu_name : Final[str] = "Extra Utilities"
+plugin_menu_name : Final[str] = "Utilities"
 plugin_name_internal : Final[str] = 'ab_utility'
 
 # Errors
@@ -38,6 +38,10 @@ e_pref_tab : Final[tuple[tuple]] = (('GENERAL', "General", ""),
                                    ('KEYS', "Keybindings", ""),
                                    ('QUICK_EXPORT', "Quick Export", ""),
                                    ('ADVANCED', "Advanced", ""))
+
+# Selection
+e_selection : Final[tuple[tuple]] = (('SELECTED', "Selected", ""),
+                                     ('ALL', "All", ""))
 
 # String find action
 e_string_find_action : Final[tuple[tuple]] = (('CONTAINS', "Contains", ""),

@@ -1,37 +1,63 @@
 # Artemy Belzer's Blender Utilities
-### A plugin with additional utilities for speeding up workflow in Blender.
-## Feature Overview
-* Bulk asset quick export to an intermediate directory.
-* Usage of directories in object names for quick exporting.
-* Export/Import a point cloud of selected assets in a .JSON format for other applications.
-* Cache object modifiers: create a non-evaluating copy of an object for quick previews.
-* Bulk UV utilities: Add, delete, rename, and set active functionality on multiple objects.
-* Bulk Color Attribute/Vertex Color utilities: Delete, remove, rename, set to render, set active.
-* Select all objects referenced in modifiers.
-* Remove unused materials on selected objects.
-* Clean up unused data blocks (Global Cleanup).
-* Reorder object data blocks alphabetically.
-* Reorder modifier object data blocks to the modifier order.
-* Store/Save the currently selected objects in Blender.
-* Select all child objects recursively from the current parent.
-* Randomize attributes on selected objects.
-* Store the current object rotation as an attribute for retrieval later.
-* Set attributes on selected objects.
-* Append boolean operation to the name of boolean objects.
-* Auto/Advanced rename with syntax and numbering conventions.
-* Find and replace object names.
-* Object names from parent.
-* Set mesh data name from object name.
-* Dynamically filled operator menu.
+## Note from Author
+This plugin is a set of operators I have used throughout the years to speed up my workflow in Blender. These actions mainly organize and speed up content management in a DCC pipeline.
 
 ## Guide
 ### Accessing the main menu.
-![AB_Blender_Utilities_Pie_Menu_v2](https://github.com/ArtemyBelzer/AB-Blender-Utilities/assets/143417950/1e80f22e-d4cf-420f-b9c5-c86cb48bbd5b)
-
 There are two ways to access the list of operators in the plugin.
-By pressing Alt+E (default key binding).
-By pressing right-click and navigating to the "Extra Utilities" submenu.
-Go into the "Object" menu in the 3D viewport and navigate to the "Extra Utilities" submenu.
+By pressing `Alt+E` (default keymap).
+By pressing `RMB/right-click` and navigating to the `Extra Utilities` submenu.
+Go into the `Object` menu in the 3D viewport and navigate to the `Extra Utilities` submenu.
+
+### Batch Rename+
+![AB_Blender_Utilities_Batch_Rename_Plus_01](https://github.com/ArtemyBelzer/AB-Blender-Utilities/assets/143417950/b49bafc4-64c6-4f1a-b78e-a678049a3741)
+
+The Batch Rename+ tool is based on the native Batch Rename tool by Blender. In addition to that it also has extended actions and some additional settings. You can open the Batch Rename+ tool by pressing `Ctrl+F2` (default keymap).
+Native Batch Rename tool:
+https://docs.blender.org/manual/en/latest/files/blend/rename.html#batch-rename
+GitHub repo:
+https://github.com/blender/blender/
+
+#### Batch Rename+ Actions
+- **Item Number:** 
+The user can get the selected item number and either replace the name with the number or add it as a prefix/suffix.
+-**Object Type:** 
+The user can get the current object type and either replace the name with the type or add it as a prefix/suffix.
+- **Splitter:** 
+Adds a splitter to the name.
+- **Active Object:** 
+The user can get the current active object and either replace the name with the active object's name or add it as a prefix/suffix.
+- **Utilities Expression:** 
+Custom expression from AB Utilities. The syntax is from the old Auto/Advanced Rename tool.
+
+![AB_Blender_Utilities_Batch_Rename_Plus_02_v2](https://github.com/ArtemyBelzer/ab-blender-utilities/assets/143417950/65d56a5e-8f48-4a12-b346-a40bac73cbd3)
+
+![AB_Blender_Utilities_Batch_Rename_Plus_03](https://github.com/ArtemyBelzer/AB-Blender-Utilities/assets/143417950/b02aa158-105f-4610-9db3-fc57a6e25fcd)
+
+
+#### Batch Rename+ Advanced Settings
+- Rename Data
+Renames the object's data if it's present.
+- Use custom numbering convention
+Automatically numbers assets with the custom naming convention without manually specifying the action. If only one selected item is present, the numbering does not occur.
+- Use a splitter between actions
+Adds a splitter between every action that adds new content to the name.
+
+#### Utilities Expression
+The Utilities Expression action is context and argument-based. The Utilities Expression action rename your assets depending on the objects selected. When no argument is present, and multiple objects are selected, the operator renames the assets to "<New Name><Splitter><Count>". i.e. The third selected object in a selection of five after renaming will be "NewObjectName_03".
+
+The user can supply the following expressions:
+- **"$name"**: references the current name of the object.
+- **"$type"**: returns the internal object type of an object. You can combine this with "$replace" to replace object types of Blender into some other naming convention. i.e. To rename "MESH" to "SM," use "$replace("MESH", "SM")".
+- **"$active"**: returns the name of the currently active object in the scene.
+- **"$index"**: returns the index of the currently selected object.
+- **"$no_index"**: prevents the automatic addition of context-based numbering when renaming multiple objects.
+- **"$replace(str_old, str_new)"**: finds all occurrences of the first argument and replaces them with the second one.
+
+Usage example:
+`$type$replace("MESH", "SM")_Cube`
+
+![AB_Blender_Utilities_Auto_Advanced_Rename_Example](https://github.com/ArtemyBelzer/Artemy-Belzers-Blender-Utilities/assets/143417950/42a6cf37-e531-421e-83f1-baf1dbdb40ec)
 
 ### Alternative Menu layouts & Customization
 Users can exclude specific categories from appearing in the plugin's "Quick Menu" (Alt+E). Submenu inclusion/exclusion can be found under the "General" tab in the plugin's properties; an alternative menu layout, a feature to draw operator menus as buttons, and a feature that adds certain utilities to the properties panel are also available.
@@ -65,46 +91,49 @@ The user can customize how the asset gets exported under the "Quick Export" tab 
 
 The "Quick Export Name Collection" feature allows the user to export wired objects that begin, end, or have an occurrence of a string in their name. This name collection feature can be helpful when exporting collision objects with a mesh without having to tick "Export Wired" for quick exports. The "Quick Export Name Collection" feature is under the "Quick Export" tab in the addon properties.
 
-### Auto/Advanced Renaming
-![AB_Blender_Utilities_Preferences_Naming_Tab_v1 1 0](https://github.com/ArtemyBelzer/AB-Blender-Utilities/assets/143417950/706b1a21-0456-4041-ae09-80352360d325)
-
-Users can set naming splitters and zero padding count under the plugin's "Naming" tab.
-
-![AB_Blender_Utilities_Auto_Advanced_Rename](https://github.com/ArtemyBelzer/Artemy-Belzers-Blender-Utilities/assets/143417950/8c4ce9ac-6a94-47c7-b074-807e9d102261)
-
-The auto-renaming utility is context and argument-based. The naming utility will rename your assets depending on the objects selected. When no argument is present, and multiple objects are selected, the operator renames the assets to "<New Name><Splitter><Count>". i.e. The third selected object in a selection of five after renaming will be "NewObjectName_03".
-#### Arguments
-The user can supply arguments to the naming utility.
-"$name"
-"$name" references the current name of the object.
-"$type"
-"$type" returns the internal object type of an object. You can combine this with "$replace" to replace object types of Blender into some other naming convention. i.e. To rename "MESH" to "SM," use "$replace("MESH", "SM")".
-"$active"
-"$active" returns the name of the currently active object in the scene.
-"$index"
-"$index" returns the index of the currently selected object.
-"$no_index"
-"$no_index" prevents the automatic addition of context-based numbering when renaming multiple objects.
-"$replace(str_old, str_new)"
-"$replace(str_old, str_new)" finds all occurrences of the first argument and replaces them with the second one.
-
-Usage example:
-`$type$replace("MESH", "SM")_Cube`
-
-![AB_Blender_Utilities_Auto_Advanced_Rename_Example](https://github.com/ArtemyBelzer/Artemy-Belzers-Blender-Utilities/assets/143417950/42a6cf37-e531-421e-83f1-baf1dbdb40ec)
-
-
 ## Bulk Attribute/Color/UV Operations
 The plugin offers functionality to perform essential bulk attribute, colour, and UV operations on multiple objects. You can set the currently active UV map, rename a colour attribute on various objects, etc.
 
+The operators are disabled if no relevant color attribute/uv channel is stored in the current selection. Ensure that a color attribute or a UV channel is present in the current selection to use the operator.
+
 If the "Deselect Invalid" checkbox is present, the operator will deselect objects that do not contain the attribute post-operation.
+
 ![AB_Blender_Utilities_Delete_UV_Channel](https://github.com/ArtemyBelzer/Artemy-Belzers-Blender-Utilities/assets/143417950/184cd50e-5f3c-4233-a53c-206d569bfd96)
 
 ![AB_Blender_Utilities_Rename_UV_Channel](https://github.com/ArtemyBelzer/Artemy-Belzers-Blender-Utilities/assets/143417950/2ed05bb0-7acd-469b-ab28-4992690fb127)
 
 ![AB_Blender_Utilities_Set_Active_UV_Channel](https://github.com/ArtemyBelzer/Artemy-Belzers-Blender-Utilities/assets/143417950/67a9477a-9477-4192-b663-d7a343cca7af)
 
-
-
 ##  Clean up unused data blocks (Global Cleanup).
 The "Global Cleanup" operator, under the "Cleanup" submenu, removes unused data blocks inside the current project file. The operator will delete any stored meshes/materials/textures/images with no references in the current project.
+
+## Feature Overview
+* Batch Rename+ with additional actions and functionality.
+* Bulk UV utilities: Add, delete, rename, and set active functionality on multiple objects.
+* Bulk Color Attribute/Vertex Color utilities: Delete, remove, rename, set to render, set active.
+* Bulk asset quick export to an intermediate directory.
+* Usage of directories in object names for quick exporting.
+* Export/Import a point cloud of selected assets in a .JSON format for other applications.
+* Cache object modifiers: create a non-evaluating copy of an object for quick previews.
+* Select all objects referenced in modifiers.
+* Remove unused materials on selected objects.
+* Clean up unused data blocks (Global Cleanup).
+* Reorder object data blocks alphabetically.
+* Reorder modifier object data blocks to the modifier order.
+* Store/Save the currently selected objects in Blender.
+* Select all child objects recursively from the current parent.
+* Randomize attributes on selected objects.
+* Store the current object rotation as an attribute for retrieval later.
+* Set attributes on selected objects.
+* Append boolean operation to the name of boolean objects.
+* Find and replace object names.
+* Object names from parent.
+* Set mesh data name from object name.
+* Dynamically filled operator menu.
+
+### Credits
+This addon uses the Auto Updater from CGCookie.
+https://github.com/CGCookie/blender-addon-updater
+
+This addon uses code snippets from Blender
+https://github.com/blender/blender

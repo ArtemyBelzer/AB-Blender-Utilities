@@ -15,12 +15,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
-import traceback
-import sys
 from bpy_extras.io_utils import ImportHelper, ExportHelper
 from types import ModuleType
 from typing import Final
-from . import ab_constants, ab_debug, ab_keymaps, ab_op_menus, ab_op_panels, ab_persistent, ab_prefs
+from . import ab_constants, ab_debug, ab_keymaps, ab_op_menus, ab_op_panels, ab_persistent, ab_prefs, ab_update
 from .. import operators
 
 
@@ -37,7 +35,6 @@ __preference_classes : Final[tuple[bpy.types.AddonPreferences|
                                                   ab_prefs.ABUtilQuickExportNames,
                                                   ab_prefs.ABUtilAddonPrefs)
 
-
 def __clear_vars() -> None:
     """Clear variables that store pointers to references to classes."""
     global __classes, __exporters, __importers, __preferences, __properties
@@ -47,7 +44,7 @@ def __clear_vars() -> None:
     __preferences = []
     __properties = []
 
-def register():
+def register(bl_info : dict):
     global __classes, __exporters, __importers, __preferences, __properties
     __clear_vars()
     
@@ -117,7 +114,10 @@ def register():
     # Load settings
     ab_persistent.load()
 
-def unregister():
+    if not ab_debug.skip_loading_updater:
+        ab_update.load(bl_info)
+
+def unregister(bl_info : dict):
     global __classes, __exporters, __importers, __preferences, __properties
     ab_op_menus.unload()
     ab_op_panels.unload()
@@ -152,5 +152,6 @@ def unregister():
     except Exception as e:
             print(f"{ab_constants.error} Error unregistering preferences {e}")
 
+    ab_update.unload()
     __clear_vars()
     

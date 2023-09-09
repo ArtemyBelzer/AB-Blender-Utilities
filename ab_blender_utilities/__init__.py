@@ -21,7 +21,7 @@ bl_info = {
     "location" : "Object Menu, Search, or Shortcuts (Default keymap for pie menu 'Alt+E')",
     "category" : "Utility",
     "doc_url" : "https://github.com/ArtemyBelzer",
-    "version" : (1, 1, 1)
+    "version" : (1, 2, 1)
 }
 
 if "ab_core" in locals():
@@ -31,7 +31,7 @@ else:
     from .addon import ab_core
 
 def register() -> None:
-    ab_core.register()
+    ab_core.register(bl_info)
 
 def unregister() -> None:
-    ab_core.unregister()
+    ab_core.unregister(bl_info)

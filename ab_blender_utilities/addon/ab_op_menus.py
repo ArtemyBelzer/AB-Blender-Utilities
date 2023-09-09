@@ -21,6 +21,11 @@ from ..lib import ab_common
 from . import ab_constants, ab_persistent
 
 __init : bool = False
+__update_ui : callable = None
+
+def set_update_ui(func : callable) -> None:
+    global __update_ui
+    __update_ui = func
 
 def __pie_menu_display_name() -> str:
     prefs : bpy.types.AddonPreferences = ab_persistent.get_preferences()
@@ -81,6 +86,11 @@ def menu_draw(self : any, context: any, *, is_pie : bool = False) -> None:
     menu_submenus : list[bpy.types.Menu] = [cls for cls in self.children if issubclass(cls, bpy.types.Menu)]
     menu_ops : list[bpy.types.Operator] = [cls for cls in self.children if issubclass(cls, bpy.types.Operator)]
     layout = self.layout
+
+    # Update UI
+    if __update_ui != None and self.base_menu:
+        __update_ui(self, context, is_pie)
+    
     if is_pie:
         if prefs.alternative_menu:
             layout = layout.menu_pie()
@@ -90,6 +100,8 @@ def menu_draw(self : any, context: any, *, is_pie : bool = False) -> None:
             layout = layout.box()
         else:
             layout = layout.menu_pie()
+
+    displayed_items : int = 0
 
     for submenu_i in menu_submenus:
         try:
@@ -101,6 +113,7 @@ def menu_draw(self : any, context: any, *, is_pie : bool = False) -> None:
                                   as_buttons = getattr(prefs,
                                                        f"submenu_{submenu_i.internal_name}_buttons"),
                                   initial = True)
+                    displayed_items += 1
                 else:  # If this menu is not shown, check if child submenus are renderable.
                     for submenu_c in submenu_i.children:
                         if issubclass(submenu_c, bpy.types.Menu):
@@ -112,6 +125,7 @@ def menu_draw(self : any, context: any, *, is_pie : bool = False) -> None:
                                                   as_buttons = getattr(prefs,
                                                                        f"submenu_{submenu_c.internal_name}_buttons"),
                                                   initial = True)
+                                    displayed_items += 1
                                     break
             else:
                 __menu_layout(layout, submenu_i, is_pie)
@@ -125,15 +139,19 @@ def menu_draw(self : any, context: any, *, is_pie : bool = False) -> None:
         if hasattr(submenu_op, "poll"):  # Does the operator have a "poll" function?
             if submenu_op.poll(context):
                 layout.operator(submenu_op.bl_idname)
+                displayed_items += 1
                 displayed_ops += 1
             else:
                 if is_pie:
                     box = layout.box()
                     box.label(text = submenu_op.bl_label)
+                    displayed_items += 1
                 else:
                     layout.operator(submenu_op.bl_idname)
+                    displayed_items += 1
         else:
             layout.operator(submenu_op.bl_idname)
+            displayed_items += 1
             displayed_ops += 1
     
     if len(menu_ops) > 0 and displayed_ops == 0:
@@ -155,6 +173,7 @@ class OBJECT_MT_ab_utility_base_menu(bpy.types.Menu, BaseMenu):
     is_pie = False
     children : list = []
     icon = None
+    base_menu = True
 
     def draw(self, context):
         menu_draw(self, context)
@@ -166,6 +185,7 @@ class OBJECT_MT_ab_utility_base_menu_pie(bpy.types.Menu, BaseMenu):
     bl_label = ab_constants.plugin_menu_name + " Quick Menu"
     children : list = []
     icon = None
+    base_menu = True
 
     def draw(self, context):
         menu_draw(self, context, is_pie = True)
@@ -225,6 +245,7 @@ def create_dynamic_submenu_class(category : str = "Example/Category",
                                 "category" : category,
                                 "is_pie" : False,
                                 "icon" : icon,
+                                "base_menu" : False,
 
                                 "draw" : lambda self, context: menu_draw(self, context, is_pie = False)
                             }
@@ -243,6 +264,7 @@ def create_dynamic_submenu_class(category : str = "Example/Category",
                 "category" : category,
                 "is_pie" : True,
                 "icon" : icon,
+                "base_menu" : False,
 
                 "draw" : lambda self, context: menu_draw(self, context, is_pie = True)
             }
