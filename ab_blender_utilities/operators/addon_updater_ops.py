@@ -1378,7 +1378,7 @@ def register(bl_info):
     # updater.addon = # define at top of module, MUST be done first
 
     # Website for manual addon download, optional but recommended to set.
-    updater.website = "https://github.com/ArtemyBelzer/AB-Blender-Utilities"
+    updater.website = "https://github.com/ArtemyBelzer/ab-blender-utilities"
 
     # Addon subfolder path.
     # "sample/path/to/addon"
