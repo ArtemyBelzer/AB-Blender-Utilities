@@ -104,6 +104,8 @@ def menu_draw(self : any, context: any, *, is_pie : bool = False) -> None:
     displayed_items : int = 0
 
     for submenu_i in menu_submenus:
+        if displayed_items >= 8:
+            break
         try:
             if __menu_has_prefs(submenu_i):
                 if getattr(prefs, f"submenu_{submenu_i.internal_name}_show"):
@@ -135,6 +137,8 @@ def menu_draw(self : any, context: any, *, is_pie : bool = False) -> None:
     
     displayed_ops : int = 0
     for submenu_op in menu_ops:
+        if displayed_items >= 8:
+            break
         # Operator display
         if hasattr(submenu_op, "poll"):  # Does the operator have a "poll" function?
             if submenu_op.poll(context):
@@ -161,6 +165,10 @@ def menu_draw(self : any, context: any, *, is_pie : bool = False) -> None:
 class BaseMenu():
     bl_label = ab_constants.plugin_menu_name
     is_pie : bool
+
+    @classmethod
+    def clear_vars(cls) -> None:
+        cls.children = []
 
     @classmethod
     def change_bl_label(cls : type, text : str) -> None:
@@ -195,6 +203,8 @@ __dynamic_menus : list = []
 
 def __clear_vars() -> None:
     global __dynamic_menu_categories, __dynamic_menus
+    OBJECT_MT_ab_utility_base_menu.clear_vars()
+    OBJECT_MT_ab_utility_base_menu_pie.clear_vars()
     __dynamic_menu_categories = set({})
     __dynamic_menus = []
 

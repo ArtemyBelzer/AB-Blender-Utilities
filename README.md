@@ -10,7 +10,7 @@ By pressing `RMB/right-click` and navigating to the `Extra Utilities` submenu.
 Go into the `Object` menu in the 3D viewport and navigate to the `Extra Utilities` submenu.
 
 ### Batch Rename+
-![AB_Blender_Utilities_Batch_Rename_Plus_01](https://github.com/ArtemyBelzer/AB-Blender-Utilities/assets/143417950/b49bafc4-64c6-4f1a-b78e-a678049a3741)
+![AB_Blender_Utilities_Batch_Rename_Plus_01](https://github.com/ArtemyBelzer/ab-blender-utilities/assets/143417950/b49bafc4-64c6-4f1a-b78e-a678049a3741)
 
 The Batch Rename+ tool is based on the native Batch Rename tool by Blender. In addition to that it also has extended actions and some additional settings. You can open the Batch Rename+ tool by pressing `Ctrl+F2` (default keymap).
 Native Batch Rename tool:
@@ -32,7 +32,7 @@ Custom expression from AB Utilities. The syntax is from the old Auto/Advanced Re
 
 ![AB_Blender_Utilities_Batch_Rename_Plus_02_v2](https://github.com/ArtemyBelzer/ab-blender-utilities/assets/143417950/65d56a5e-8f48-4a12-b346-a40bac73cbd3)
 
-![AB_Blender_Utilities_Batch_Rename_Plus_03](https://github.com/ArtemyBelzer/AB-Blender-Utilities/assets/143417950/b02aa158-105f-4610-9db3-fc57a6e25fcd)
+![AB_Blender_Utilities_Batch_Rename_Plus_03](https://github.com/ArtemyBelzer/ab-blender-utilities/assets/143417950/b02aa158-105f-4610-9db3-fc57a6e25fcd)
 
 
 #### Batch Rename+ Advanced Settings
@@ -62,12 +62,12 @@ Usage example:
 ### Alternative Menu layouts & Customization
 Users can exclude specific categories from appearing in the plugin's "Quick Menu" (Alt+E). Submenu inclusion/exclusion can be found under the "General" tab in the plugin's properties; an alternative menu layout, a feature to draw operator menus as buttons, and a feature that adds certain utilities to the properties panel are also available.
 
-![AB_Blender_Utilities_Alternative_Menu](https://github.com/ArtemyBelzer/AB-Blender-Utilities/assets/143417950/2df8adb4-52ce-4d3f-942f-8c8136a3d300)
+![AB_Blender_Utilities_Alternative_Menu](https://github.com/ArtemyBelzer/ab-blender-utilities/assets/143417950/2df8adb4-52ce-4d3f-942f-8c8136a3d300)
 
-![AB_Blender_Utilities_Menu_Customization](https://github.com/ArtemyBelzer/AB-Blender-Utilities/assets/143417950/346159ec-5c27-49bb-af45-4a7d2113ea40)
+![AB_Blender_Utilities_Menu_Customization](https://github.com/ArtemyBelzer/ab-blender-utilities/assets/143417950/346159ec-5c27-49bb-af45-4a7d2113ea40)
 
 ### Rebinding keys
-![AB_Blender_Utilities_Preferences_Keymaps_Tab](https://github.com/ArtemyBelzer/AB-Blender-Utilities/assets/143417950/02b4e24d-4806-4ece-89e0-1ebb74bc18f2)
+![AB_Blender_Utilities_Preferences_Keymaps_Tab](https://github.com/ArtemyBelzer/ab-blender-utilities/assets/143417950/02b4e24d-4806-4ece-89e0-1ebb74bc18f2)
 You can rebind keys inside Blender preferences by navigating to the plugin in the Add-ons tab. You can rebind the main menu, auto/advanced rename functionality, and the naming pie menu. If you would like to turn off the functioning of these keymaps, please uncheck the box on the left.
 
 ### Bulk Asset export
