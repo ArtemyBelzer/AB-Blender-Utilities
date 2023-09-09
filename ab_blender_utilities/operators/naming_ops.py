@@ -377,7 +377,7 @@ class OpABBatchRenamePlus(wm.WM_OT_batch_rename, CategoryNaming):
         return {'FINISHED'}
 
     def execute(self, context):
-        if not ab_persistent.get_preferences().old_advanced_rename_menu:
+        if not ab_persistent.get_preferences().legacy_rename_menu:
             return self._execute(context)
         else:
             return self.__old_execute(context)
@@ -393,6 +393,8 @@ class OpABBatchRenamePlus(wm.WM_OT_batch_rename, CategoryNaming):
             self.num_padding = prefs.num_padding
             self.name_splitter = prefs.name_splitter
             self.use_a_splitter_between_actions = prefs.use_a_splitter_between_actions
+            self.use_unique_num_splitter = prefs.use_unique_num_splitter
+            self.num_splitter = prefs.num_splitter
             self.type = 'SET'
             self.default_loaded = True
         wm = context.window_manager
@@ -409,8 +411,6 @@ class OpABBatchRenamePlus(wm.WM_OT_batch_rename, CategoryNaming):
         row.label(text = "Advanced")
 
         if self.adv_menu_state:
-            prefs : bpy.types.AddonPreferences = ab_persistent.get_preferences()
-
             col = adv_menu_box.column()
             col.label(text = "Actions:")
             col.prop(self, "use_a_splitter_between_actions")
@@ -606,7 +606,7 @@ class OpABBatchRenamePlus(wm.WM_OT_batch_rename, CategoryNaming):
         self._advanced_menu(layout)
         
     def draw(self, context):
-        if not ab_persistent.get_preferences().old_advanced_rename_menu:
+        if not ab_persistent.get_preferences().legacy_rename_menu:
             self.__draw_menu(context)
         else:
             self.__draw_old_menu(context)

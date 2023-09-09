@@ -181,7 +181,7 @@ def create_dynamic_panel_class(category : str = "Example/Category",
 
                                 "bl_idname" : f"VIEW3D_PT_{ab_constants.plugin_name_internal}_panel_{internal_name}",
                                 "bl_label" : menu_name,
-                                "bl_category" : ab_constants.plugin_name_short,
+                                "bl_category" : ab_constants.plugin_menu_name,
                                 "bl_space_type" : 'VIEW_3D',
                                 "bl_region_type" : 'UI',
 

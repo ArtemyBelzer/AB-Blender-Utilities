@@ -21,7 +21,7 @@ bl_info = {
     "location" : "Object Menu, Search, or Shortcuts (Default keymap for pie menu 'Alt+E')",
     "category" : "Utility",
     "doc_url" : "https://github.com/ArtemyBelzer",
-    "version" : (1, 2, 0)
+    "version" : (1, 2, 1)
 }
 
 if "ab_core" in locals():

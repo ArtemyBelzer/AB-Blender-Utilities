@@ -82,9 +82,23 @@ class ABUtilAddonPrefs(bpy.types.AddonPreferences):
     )
 
     # Old advanced rename menu
-    old_advanced_rename_menu : bpy.props.BoolProperty(
-        name = "Old Advanced Rename Menu",
+    legacy_rename_menu : bpy.props.BoolProperty(
+        name = "Legacy Menu",
+        default = False,
+        description = "The old Auto/Advanced Rename tool menu before Batch Rename+.\nReplaces Batch Rename+ with the old Auto/Advanced tool menu."
+    )
+
+    # Num splitter
+
+    use_unique_num_splitter : bpy.props.BoolProperty(
+        name = "Unique Splitter",
         default = False
+    )
+
+    num_splitter : bpy.props.StringProperty(
+        name = "Number Splitter",
+        default = ".",
+        description = "Splitter that is used for numbers."
     )
 
     # Sub-menu display
@@ -407,14 +421,16 @@ class ABUtilAddonPrefs(bpy.types.AddonPreferences):
         description = "Exports custom properties"
     )
 
+    # Keymaps
+
     do_not_load_keymaps : bpy.props.BoolProperty(
-        name = "Do not load keymaps",
+        name = "Skip Loading",
         default = False,
         description = "Prevents loading keymaps on start"
     )
 
-    auto_re_add_missing_keymaps : bpy.props.BoolProperty(
-        name = "Auto re-add missing keymaps",
+    reload_missing_keymaps : bpy.props.BoolProperty(
+        name = "Reload Missing",
         default = True,
         description = "Automatically adds in missing keymaps from the user keyconfig."
     )
@@ -456,36 +472,46 @@ class ABUtilAddonPrefs(bpy.types.AddonPreferences):
         box.label(text = "You can render a submenu as buttons in a pie menu by checking these boxes.")
         box.label(text = "The parent of a submenu determines if it's rendered as buttons.")
 
-        parent.prop(self, "pie_menu_button_spacing_x")
-        parent.prop(self, "pie_menu_button_spacing_y")
+        box.prop(self, "pie_menu_button_spacing_x")
+        box.prop(self, "pie_menu_button_spacing_y")
 
-        parent.prop(self, "submenu_attributes_buttons")
-        parent.prop(self, "submenu_cleanup_buttons")
-        parent.prop(self, "submenu_colors_buttons")
-        parent.prop(self, "submenu_file_buttons")
-        parent.prop(self, "submenu_modifiers_buttons")
-        parent.prop(self, "submenu_naming_buttons")
-        parent.prop(self, "submenu_objects_buttons")
-        parent.prop(self, "submenu_point_cloud_buttons")
-        parent.prop(self, "submenu_selection_buttons")
-        parent.prop(self, "submenu_uvs_buttons")
-        parent.prop(self, "submenu_fbx_quick_export_buttons")
+        row = box.row()
+        row.prop(self, "submenu_attributes_buttons")
+        row.prop(self, "submenu_cleanup_buttons")
+        row.prop(self, "submenu_colors_buttons")
+        row = box.row()
+        row.prop(self, "submenu_file_buttons")
+        row.prop(self, "submenu_modifiers_buttons")
+        row.prop(self, "submenu_naming_buttons")
+        row = box.row()
+        row.prop(self, "submenu_objects_buttons")
+        row.prop(self, "submenu_point_cloud_buttons")
+        row.prop(self, "submenu_selection_buttons")
+        row = box.row()
+        row.prop(self, "submenu_uvs_buttons")
+        row.prop(self, "submenu_fbx_quick_export_buttons")
+        row.label(text = "")
 
     def __draw_panel_show(self, parent) -> None:
         box = parent.box()
         box.label(text = "You can include menus in a 3D Viewport panel.")
 
-        parent.prop(self, "panel_attributes_show")
-        parent.prop(self, "panel_cleanup_show")
-        parent.prop(self, "panel_colors_show")
-        parent.prop(self, "panel_file_show")
-        parent.prop(self, "panel_modifiers_show")
-        parent.prop(self, "panel_naming_show")
-        parent.prop(self, "panel_objects_show")
-        parent.prop(self, "panel_point_cloud_show")
-        parent.prop(self, "panel_selection_show")
-        parent.prop(self, "panel_uvs_show")
-        parent.prop(self, "panel_fbx_quick_export_show")
+        row = box.row()
+        row.prop(self, "panel_attributes_show")
+        row.prop(self, "panel_cleanup_show")
+        row.prop(self, "panel_colors_show")
+        row = box.row()
+        row.prop(self, "panel_file_show")
+        row.prop(self, "panel_modifiers_show")
+        row.prop(self, "panel_naming_show")
+        row = box.row()
+        row.prop(self, "panel_objects_show")
+        row.prop(self, "panel_point_cloud_show")
+        row.prop(self, "panel_selection_show")
+        row = box.row()
+        row.prop(self, "panel_uvs_show")
+        row.prop(self, "panel_fbx_quick_export_show")
+        row.label(text = "")
 
     def __draw_submenu_show(self, parent) -> None:
         box = parent.box()
@@ -493,60 +519,71 @@ class ABUtilAddonPrefs(bpy.types.AddonPreferences):
         box.label(text = "Disabling the \"Attributes\" menu for example will instead render its first submenu")
         box.label(text = " \"Colors\".")
 
-        parent.prop(self, "submenu_attributes_show")
-        parent.prop(self, "submenu_cleanup_show")
-        parent.prop(self, "submenu_colors_show")
-        parent.prop(self, "submenu_file_show")
-        parent.prop(self, "submenu_modifiers_show")
-        parent.prop(self, "submenu_naming_show")
-        parent.prop(self, "submenu_objects_show")
-        parent.prop(self, "submenu_point_cloud_show")
-        parent.prop(self, "submenu_selection_show")
-        parent.prop(self, "submenu_uvs_show")
-        parent.prop(self, "submenu_fbx_quick_export_show")
+        row = box.row()
+        row.prop(self, "submenu_attributes_show")
+        row.prop(self, "submenu_cleanup_show")
+        row.prop(self, "submenu_colors_show")
+        row = box.row()
+        row.prop(self, "submenu_file_show")
+        row.prop(self, "submenu_modifiers_show")
+        row.prop(self, "submenu_naming_show")
+        row = box.row()
+        row.prop(self, "submenu_objects_show")
+        row.prop(self, "submenu_point_cloud_show")
+        row.prop(self, "submenu_selection_show")
+        row = box.row()
+        row.prop(self, "submenu_uvs_show")
+        row.prop(self, "submenu_fbx_quick_export_show")
+        row.label(text = "")
 
     def __draw_panels_in_props(self, parent) -> None:
         box = parent.box()
         box.label(text = "Adds panels to the properties panel.")
 
-        parent.prop(self, "show_color_attribute_utils_in_properties")
-        parent.prop(self, "show_data_attribute_utils_in_properties")
-        parent.prop(self, "show_object_attribute_utils_in_properties")
-        parent.prop(self, "show_uv_attribute_utils_in_properties")
+        row = box.row()
+        row.prop(self, "show_color_attribute_utils_in_properties")
+        row.prop(self, "show_data_attribute_utils_in_properties")
+        row = box.row()
+        row.prop(self, "show_object_attribute_utils_in_properties")
+        row.prop(self, "show_uv_attribute_utils_in_properties")
 
     def __draw_advanced(self, parent) -> None:
         split = parent.split()
         box = split.box()
-        box.label(text = "Advanced Menu")
-        column = box.column()
-        column.prop(self, "do_not_load_keymaps")
-        column.label(text = self.bl_rna.properties["do_not_load_keymaps"].description)
-        column.prop(self, "auto_re_add_missing_keymaps")
-        column.label(text = self.bl_rna.properties["auto_re_add_missing_keymaps"].description)
-        column.prop(self, "load_viewport_panel")
-        column.label(text = self.bl_rna.properties["load_viewport_panel"].description)
-        column.prop(self, "old_advanced_rename_menu")
+
+        row_rename_keymaps = box.row()
+        box_rename = row_rename_keymaps.box()
+        box_rename.label(text = "Batch Rename+")
+        col = box_rename.column()
+        col.prop(self, "legacy_rename_menu")
+
+        box_keymaps = row_rename_keymaps.box()
+        box_keymaps.label(text = "Keymaps")
+        row = box_keymaps.row()
+        col = row.column()
+        col.prop(self, "do_not_load_keymaps")
+        col = row.column()
+        col.prop(self, "reload_missing_keymaps")
+
+        box_panels = box.box()
+        box_panels.label(text = "Panels")
+        col = box_panels.column()
+        col.prop(self, "load_viewport_panel")
+
 
     def __draw_general(self, context, parent) -> None:
         split = parent.split()
         box = split.box()
-        box.label(text = "General Preferences")
 
         # Update UI
         if UPDATE_UI != None:
             UPDATE_UI(self, context, box)
 
-        box_exporting = box.box()
-        box_exporting.label(text = "Quick Export")
-        box_exporting.prop(self, "uses_default_export_path")
-        if self.uses_default_export_path:
-            box_exporting.prop(self, "default_export_path")
-        box_exporting.operator("wm.ab_delete_scene_quick_export_paths")
+        row = box.row()
+        box_properties_panel = row.box()
+        box_properties_panel.label(text = "Property Panel")
 
-        box_properties = box.box()
-        box_properties.label(text = "Property Panel")
-
-        box_properties.prop(self, "utilties_in_properties")
+        box_properties_panel.prop(self, "utilties_in_properties")
 
         box_alternative_menu = box.box()
         box_alternative_menu.label(text = "Alternative Menu")
@@ -572,18 +609,28 @@ class ABUtilAddonPrefs(bpy.types.AddonPreferences):
     def __draw_naming(self, parent) -> None:
         split = parent.split()
         box = split.box()
-        box.label(text = "Naming Preferences")
-        box_numbering = box.box()
-        box_numbering.label(text = "Custom Numbering Conventions")
+        
+        col = box.column()
+        box_actions = col.box()
+        box_actions.label(text = "Actions:")
+        box_actions.prop(self, "use_a_splitter_between_actions")
+        
+        box_naming = col.box()
+        box_naming.label(text = "Naming:")
+        box_naming.prop(self, "name_splitter")
+
+        box_numbering = col.box()
+        box_numbering.label(text = "Numbering:")
         box_numbering.prop(self, "auto_numbering")
-        box_numbering.prop(self, "name_splitter")
-        box_numbering.prop(self, "num_padding")
-        box_numbering.prop(self, "use_a_splitter_between_actions")
+        row = box_numbering.row()
+        row.prop(self, "num_padding")
+        row.prop(self, "use_unique_num_splitter")
+        if self.use_unique_num_splitter:
+            box_numbering.prop(self, "num_splitter")
 
     def __draw_keymaps(self, parent) -> None:
         split = parent.split()
         box = split.box()
-        box.label(text = "Keymaps")
 
         column = box.column()
         wm = bpy.context.window_manager
@@ -600,6 +647,16 @@ class ABUtilAddonPrefs(bpy.types.AddonPreferences):
         split = parent.split()
         column = split.column()
         box = column.box()
+
+        box_exporting = box.box()
+        box_exporting.label(text = "Paths")
+        row = box_exporting.row()
+        row.prop(self, "uses_default_export_path")
+        row.operator("wm.ab_delete_scene_quick_export_paths")
+        if self.uses_default_export_path:
+            box_exporting.prop(self, "default_export_path")
+        
+
         box.prop(self, "fbx_exporter_type")
         box = column.box()
         if self.fbx_exporter_type == 'NATIVE':
