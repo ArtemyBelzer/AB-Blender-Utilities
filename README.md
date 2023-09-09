@@ -30,7 +30,7 @@ The user can get the current active object and either replace the name with the 
 - **Utilities Expression:** 
 Custom expression from AB Utilities. The syntax is from the old Auto/Advanced Rename tool.
 
-![AB_Blender_Utilities_Batch_Rename_Plus_02](https://github.com/ArtemyBelzer/AB-Blender-Utilities/assets/143417950/ef46ed63-72a8-4232-b7e2-ec926a201f2e)
+![AB_Blender_Utilities_Batch_Rename_Plus_02_v2](https://github.com/ArtemyBelzer/ab-blender-utilities/assets/143417950/65d56a5e-8f48-4a12-b346-a40bac73cbd3)
 
 ![AB_Blender_Utilities_Batch_Rename_Plus_03](https://github.com/ArtemyBelzer/AB-Blender-Utilities/assets/143417950/b02aa158-105f-4610-9db3-fc57a6e25fcd)
 
