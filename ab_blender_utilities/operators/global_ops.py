@@ -27,7 +27,7 @@ from ..addon.ab_constants import e_add_remove
 class OpAbDeleteSceneQuickExportPaths(bpy.types.Operator):
     """Clears any quick export paths from the current Blend file"""
     bl_idname = "wm.ab_delete_scene_quick_export_paths"
-    bl_label = "Delete quick export attributes from scenes"
+    bl_label = "Clear scene attributes"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):

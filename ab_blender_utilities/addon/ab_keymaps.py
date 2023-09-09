@@ -55,13 +55,13 @@ def get_user_keymaps() -> list[tuple[bpy.types.KeyMap, bpy.types.KeyMapItem]]:
                     user_keymaps.append((km_user, kmi_user))
                     keymap_found = True
                     break
-            if not keymap_found and prefs.auto_re_add_missing_keymaps:
+            if not keymap_found and prefs.reload_missing_keymaps:
                 copy_keymap(kmi_addon, km_user)
         else:
             user_keymaps.append((km_user, km_user.keymap_items.get(kmi_addon.idname)))
             if km_user.keymap_items.get(kmi_addon.idname) is not None:
                 keymap_found = True
-            if not keymap_found and prefs.auto_re_add_missing_keymaps:
+            if not keymap_found and prefs.reload_missing_keymaps:
                 copy_keymap(kmi_addon, km_user)
 
     return user_keymaps

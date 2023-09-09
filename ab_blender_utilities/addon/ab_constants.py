@@ -18,7 +18,7 @@ from typing import Final
 
 # General
 plugin_name_short : Final[str] = "AB Utilities"
-plugin_menu_name : Final[str] = "Extra Utilities"
+plugin_menu_name : Final[str] = "Utilities"
 plugin_name_internal : Final[str] = 'ab_utility'
 
 # Errors
