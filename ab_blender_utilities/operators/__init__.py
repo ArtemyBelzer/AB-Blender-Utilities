@@ -1,5 +1,5 @@
 # Artemy Belzer's Blender Utilities - Additional Blender utilities.
-# Copyright (C) 2023 Artemy Belzer
+# Copyright (C) 2023-2024 Artemy Belzer
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,23 +14,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from . import color_attribute_ops, custom_prop_ops, global_ops, mat_ops, modifier_ops, naming_ops, rot_ops, data_block_ops, selection_ops, uv_ops
+from .file_ops import file_ops_common, file_ops_custom, file_ops_fbx
 from types import ModuleType
 
-from . import cleanup_ops, color_attribute_ops, data_ops, global_ops, modifier_ops, naming_ops, obj_ops, selection_ops, uv_ops
-from .file_ops import file_ops_common, file_ops_custom, file_ops_fbx
-
-__modules : tuple[ModuleType] = (cleanup_ops,
-                                 color_attribute_ops,
-                                 data_ops,
-                                 global_ops,
-                                 modifier_ops,
-                                 naming_ops,
-                                 obj_ops,
-                                 selection_ops,
-                                 uv_ops,
-                                 file_ops_common,
-                                 file_ops_custom,
-                                 file_ops_fbx)
 
 def get_modules() -> tuple[ModuleType]:
-    return __modules
+    modules : tuple[ModuleType] = (color_attribute_ops,
+                                   custom_prop_ops,
+                                   global_ops,
+                                   mat_ops,
+                                   modifier_ops,
+                                   naming_ops,
+                                   rot_ops,
+                                   data_block_ops,
+                                   selection_ops,
+                                   uv_ops,
+                                   file_ops_common,
+                                   file_ops_custom,
+                                   file_ops_fbx)
+    return modules

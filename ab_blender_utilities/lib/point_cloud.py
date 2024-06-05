@@ -1,5 +1,5 @@
 # Artemy Belzer's Blender Utilities - Additional Blender utilities.
-# Copyright (C) 2023 Artemy Belzer
+# Copyright (C) 2023-2024 Artemy Belzer
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,11 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""
-JSON related functionality
-"""
 import json
 import collections
+
 
 PointCloudPoint : type[tuple[any, ...]] = collections.namedtuple("PointCloudPoint", ["location", "rotation", "scale", "asset_path"])
 
@@ -29,7 +27,7 @@ def loads_json_data(json_data : str, present_key : str = "") -> dict | None:
             return None
         return data_d
     except Exception as e:
-        print(f"Error parsing JSON file: {e}")
+        print("Error parsing JSON file: " + e)
         return None
 
 def parse_module_file_data(json_data : str = "") -> tuple | None:
@@ -60,11 +58,8 @@ def load_pc_data(json_data : str) -> list | None:
     """Returns a list of points with original data for the points"""
     data : list = []  # Serialized data
     
-    try:
-        point_cloud_d : dict = json.loads(json_data)
-        if "point_cloud" not in point_cloud_d:
-            return None
-    except:
+    point_cloud_d : dict = json.loads(json_data)
+    if "point_cloud" not in point_cloud_d:
         return None
 
     for point in point_cloud_d["point_cloud"]:
@@ -76,4 +71,3 @@ def load_pc_data(json_data : str) -> list | None:
         data.append((location, rotation, scale, asset_path))
     
     return data
-    

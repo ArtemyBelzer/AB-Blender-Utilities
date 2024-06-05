@@ -1,5 +1,5 @@
 # Artemy Belzer's Blender Utilities - Additional Blender utilities.
-# Copyright (C) 2023 Artemy Belzer
+# Copyright (C) 2023-2024 Artemy Belzer
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,13 +18,12 @@ from typing import Final
 
 # General
 plugin_name_short : Final[str] = "AB Utilities"
-plugin_menu_name : Final[str] = "Utilities"
-plugin_name_internal : Final[str] = 'ab_utility'
+plugin_menu_name : Final[str] = "AB Utilities"
 
 # Errors
-info : Final[str] = "[AB Extra Utilities]: "
-error : Final[str] = "[AB Extra Utilities Error]: "
-warning : Final[str] = "[AB Extra Utilities Warning]: "
+info : Final[str] = "[AB Blender Utilities]: "
+error : Final[str] = "[AB Blender Utilities Error]: "
+warning : Final[str] = "[AB Blender Utilities Warning]: "
 
 # Baking
 bake_suffixes : Final[tuple[str]] = ("_high", "_low", "_High", "_Low")
@@ -33,15 +32,9 @@ bake_suffixes : Final[tuple[str]] = ("_high", "_low", "_High", "_Low")
 block_types : Final[tuple[str]] = ("meshes", "materials", "textures", "images")
 
 # Preference tabs
-e_pref_tab : Final[tuple[tuple]] = (('GENERAL', "General", ""),
-                                   ('NAMING', "Naming", ""),
+e_pref_tab : Final[tuple[tuple]] = (('PANELS', "Panel Visibility", ""),
                                    ('KEYS', "Keybindings", ""),
-                                   ('QUICK_EXPORT', "Quick Export", ""),
-                                   ('ADVANCED', "Advanced", ""))
-
-# Selection
-e_selection : Final[tuple[tuple]] = (('SELECTED', "Selected", ""),
-                                     ('ALL', "All", ""))
+                                   ('QUICK_EXPORT', "Quick Export", ""))
 
 # String find action
 e_string_find_action : Final[tuple[tuple]] = (('CONTAINS', "Contains", ""),
@@ -58,9 +51,11 @@ e_pref_display_tab : Final[tuple[tuple]] = (('SUBMENUS', "Menus", ""),
                                            ('SUBMENU_BUTTONS', "Button Menus", ""),
                                            ('PANELS_IN_PROPERTIES', "Property Panel", ""))
 
-# Missing Conditions
-missing_condition_msg : Final[str] = "The conditions to use these operators were not met. Please read the descriptions or the \"ReadMe\" of the addon."
-missing_condition_msg_panel : Final[str] = "The conditions to use these operators were not met."
+# Color attribs
+e_vtx_col_domain : Final[tuple[tuple]] = (('POINT', "Vertex", ""),
+                                          ('CORNER', "Face Corner", ""))
+e_vtx_col_data_type : Final[tuple[tuple]] = (('FLOAT_COLOR', "Color", ""),
+                                             ('BYTE_COLOR', "Byte Color", ""))
 
 # Menu init error
 menus_not_initialized : Final[str] = "Menus are not initialzied."

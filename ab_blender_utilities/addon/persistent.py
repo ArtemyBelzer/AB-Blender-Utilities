@@ -1,5 +1,5 @@
 # Artemy Belzer's Blender Utilities - Additional Blender utilities.
-# Copyright (C) 2023 Artemy Belzer
+# Copyright (C) 2023-2024 Artemy Belzer
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,13 +15,14 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """
-This module stores variables used for debugging.
+Contains persistent methods used to manage the addon and its preferences.
 """
-from typing import Final
+import bpy
+from bpy.types import AddonPreferences
+from bpy.app.handlers import persistent
 
-skip_loading_properties : Final[bool] = False
-skip_loading_operators : Final[bool] = False
-skip_loading_importers : Final[bool] = False
-skip_loading_exporters : Final[bool] = False
-simulate_update_presence : Final[bool] = False
-skip_loading_updater : Final[bool] = False
+
+@persistent
+def get_preferences() -> AddonPreferences:
+    """Returns `AddonPreferences` (preferences) of the current package."""
+    return bpy.context.preferences.addons[__package__[:len(__package__)-6]].preferences

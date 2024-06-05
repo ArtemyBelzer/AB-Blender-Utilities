@@ -1,5 +1,5 @@
 # Artemy Belzer's Blender Utilities - Additional Blender utilities.
-# Copyright (C) 2023 Artemy Belzer
+# Copyright (C) 2023-2024 Artemy Belzer
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,20 +15,25 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
-import mathutils
-from . import ab_common
+from bpy.types import Operator
 
-def store_rotation_in_attribute(op : bpy.types.Operator, obj : bpy.types.Object) -> None:
+from mathutils import Vector
+from . import common
+
+
+saved_rot_prop_name = "abbu_saved_rot"
+
+def save_rotation_in_attribute(op : Operator, o : bpy.types.Object, clear_rot : bool) -> None:
     """Stores the rotation inside an attribute of an object and zeroes out the rotation."""
-    if not "ab_stored_rotation" in obj:
-        obj["ab_stored_rotation"] = obj.rotation_euler.copy()
-        obj.rotation_euler = mathutils.Vector((0.0, 0.0, 0.0))
+    if not saved_rot_prop_name in o:
+        o[saved_rot_prop_name] = o.rotation_euler.copy()
+        if clear_rot:
+            o.rotation_euler = Vector((0.0, 0.0, 0.0))
     else:
-        print(ab_common.warning(op, f"store_rotation_in_attribute({obj.name}) \
-                                can not store rotation. Rotation is already stored in this object."))
+        print(common.warning(op, "save_rotation_in_attribute(" + o.name + ") can not store rotation. Rotation is already stored in this object."))
 
-def restore_rotation_in_attribute(obj : bpy.types.Object) -> None:
+def restore_rotation_in_attribute(o : bpy.types.Object) -> None:
     """Restores the rotation stored in an attribute."""
-    if "ab_stored_rotation" in obj:
-        obj.rotation_euler = obj["ab_stored_rotation"]
-        del obj["ab_stored_rotation"]
+    if saved_rot_prop_name in o:
+        o.rotation_euler = o[saved_rot_prop_name]
+        del o[saved_rot_prop_name]

@@ -1,5 +1,5 @@
 # Artemy Belzer's Blender Utilities - Additional Blender utilities.
-# Copyright (C) 2023 Artemy Belzer
+# Copyright (C) 2023-2024 Artemy Belzer
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,51 +14,50 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""
-Global operators
-These are not included in the dynamically filled menu.
-"""
 import bpy
-from ..lib import ab_quick_export
-from ..addon import ab_keymaps, ab_persistent
-from ..addon.ab_constants import e_add_remove
+from bpy.props import EnumProperty
+from bpy.types import Operator
+
+from ..lib import quick_export
+from ..addon import keymaps, persistent
+from ..addon.constants import e_add_remove
 
 
-class OpAbDeleteSceneQuickExportPaths(bpy.types.Operator):
+class ABBU_OT_DeleteQuickExportPaths(Operator):
     """Clears any quick export paths from the current Blend file"""
-    bl_idname = "wm.ab_delete_scene_quick_export_paths"
-    bl_label = "Clear scene attributes"
+    bl_idname = "wm.abbu_delete_quick_export_paths"
+    bl_label = "Delete quick export attributes from scenes"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
         for scene in bpy.data.scenes:
-            if ab_quick_export.has_quick_export_path(scene):
-                del scene[ab_quick_export.export_path_attribute]
+            if quick_export.has_quick_export_path(scene):
+                del scene[quick_export.export_path_attribute]
         return {'FINISHED'}
     
-class OpAbRestoreDefaultKeymaps(bpy.types.Operator):
+class ABBU_OT_RestoreDefaultKeymaps(Operator):
     """Restores the default keymap"""
-    bl_idname = "wm.ab_restore_default_keymaps"
+    bl_idname = "wm.abbu_restore_default_keymaps"
     bl_label = "AB Utilities - Restore Default Keymaps"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        ab_keymaps.restore()
+        keymaps.restore()
         return {'FINISHED'}
     
-class OpAbAddRemoveQuickExportNames(bpy.types.Operator):
+class ABBU_OT_AddRemoveQuickExportNames(Operator):
     """Adds or removes quick export names"""
-    bl_idname = "object.ab_add_remove_quick_export_name"
+    bl_idname = "object.abbu_add_remove_quick_export_names"
     bl_label = "Add/Remove Quick Export Names"
     bl_description = "Adds or removes a string to a list in the plugin's properties."
     bl_options = {'REGISTER'}
 
-    arg : bpy.props.EnumProperty(
+    arg : EnumProperty(
         items = e_add_remove
-        )
-    
+    )
+
     def invoke(self, context, event):
-        prefs = ab_persistent.get_preferences()
+        prefs = persistent.get_preferences()
         if self.arg == "ADD":
             name_entry = prefs.quick_export_name_collection.add()
             name_entry.name = "Default"
@@ -70,6 +69,6 @@ class OpAbAddRemoveQuickExportNames(bpy.types.Operator):
             prefs.quick_export_name_collection.remove(entry_idx)
             return {'FINISHED'}
     
-OPERATORS : tuple[bpy.types.Operator] = (OpAbAddRemoveQuickExportNames,
-                                         OpAbDeleteSceneQuickExportPaths,
-                                         OpAbRestoreDefaultKeymaps)
+OPERATORS : tuple[Operator] = (ABBU_OT_AddRemoveQuickExportNames,
+                               ABBU_OT_DeleteQuickExportPaths,
+                               ABBU_OT_RestoreDefaultKeymaps)

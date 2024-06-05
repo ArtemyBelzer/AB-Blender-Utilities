@@ -1,5 +1,5 @@
 # Artemy Belzer's Blender Utilities - Additional Blender utilities.
-# Copyright (C) 2023 Artemy Belzer
+# Copyright (C) 2023-2024 Artemy Belzer
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
-from ..addon import ab_persistent
+from bpy.types import AddonPreferences
+
+from ..addon import persistent
 from typing import Final
 
 exporter_type : Final[tuple[tuple]]= (('NATIVE', "Native FBX", ""),
@@ -36,7 +38,7 @@ color_types : Final[tuple[tuple]]= (('NONE', "None", ""),
 
 def export_fbx_file(file_path : str) -> None:
     """Exports an FBX file based on the current selection."""
-    prefs : bpy.types.AddonPreferences = ab_persistent.get_preferences()
+    prefs : AddonPreferences = persistent.get_preferences()
     object_types : set = set()
 
     if prefs.fbx_exporter_type == 'NATIVE':
@@ -64,4 +66,3 @@ def export_fbx_file(file_path : str) -> None:
                                 use_tspace = prefs.native_fbx_ex_use_tspace,
                                 use_custom_props = prefs.native_fbx_ex_use_custom_props,
                                 add_leaf_bones = False)
-        

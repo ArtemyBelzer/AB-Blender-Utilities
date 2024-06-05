@@ -1,5 +1,5 @@
 # Artemy Belzer's Blender Utilities - Additional Blender utilities.
-# Copyright (C) 2023 Artemy Belzer
+# Copyright (C) 2023-2024 Artemy Belzer
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,52 +15,101 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
-from ..lib import ab_common, ab_modifier_caching
+from bpy.props import BoolProperty
+from bpy.types import Operator
 
-class CategoryBaseModifier(ab_common.Category):
-    category = "Modifiers"
-    category_arg = ab_common.OperatorCategories.SELECTION
-    category_icon = 'MODIFIER'
+from .categories import CatMod
+from ..lib import common, mod_cache
+from ..lib.mod_cache import cached_obj_prop_name, parent_and_keep_transform
 
-class OpABSelectModifierObjects(bpy.types.Operator, CategoryBaseModifier):
-    """Selects the objects referenced inside modifiers"""
-    bl_idname = "object.ab_select_modifier_objects"
+
+class ABBU_OT_CacheModifiers(Operator, CatMod):
+    """Caches the modifiers of the currently selected object by duplicating it, applying modifiers on the duplicate, and hiding the original object with disabled modifiers"""
+    bl_idname = "wm.abbu_cache_modifiers"
+    bl_label = "Cache Modifiers"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        selected_objects_ordered : tuple[bpy.types.Object] = tuple(sorted(bpy.context.selected_objects,
+                                                                          key = lambda x: x.name,
+                                                                          reverse=False))
+
+        for src_obj in selected_objects_ordered:
+
+            deps_graph = bpy.context.evaluated_depsgraph_get()
+            obj_data_new = bpy.data.meshes.new_from_object(src_obj.evaluated_get(deps_graph), depsgraph = deps_graph)
+            
+
+            copied_obj : bpy.types.Object = bpy.data.objects.new(src_obj.name, obj_data_new)
+            copied_obj.matrix_world = src_obj.matrix_world
+
+            copied_obj.name = src_obj.name
+            copied_obj.data.name = src_obj.data.name
+            
+            # Rename source object
+            src_obj.name = copied_obj.name + "_cache"
+            src_obj.data.name = copied_obj.data.name + "_cache"
+
+            # Disable modifiers on source object
+            for modifier in src_obj.modifiers:
+                modifier.show_viewport = False
+
+            for child in src_obj.children:
+                parent_and_keep_transform(copied_obj, child)
+            
+            bpy.context.collection.objects.link(copied_obj)
+
+            copied_obj[cached_obj_prop_name] : bpy.types.Object = src_obj
+            src_obj.select_set(False)
+            copied_obj.select_set(True)
+
+            if bpy.context.active_object == src_obj:
+                bpy.context.view_layer.objects.active = copied_obj
+
+            src_obj.hide_viewport = True
+            src_obj.hide_render = True
+
+        return {'FINISHED'}
+
+class ABBU_OT_SelectModifierObjects(Operator, CatMod):
+    """Selects the objects referenced inside modifiers on one or more objects"""
+    bl_idname = "object.abbu_select_modifier_objects"
     bl_label = "Select Modifier Objects"
     bl_options = {'REGISTER', 'UNDO'}
-    
-    deselect_current : bpy.props.BoolProperty(
+
+    deselect_current : BoolProperty(
         name = "Deselect Current",
         default = False
     )
 
     def execute(self, context):
-        for obj in ab_common.get_selected_objects():
-            ab_common.get_modifier_objects(obj, select=True)
+        for o in bpy.context.selected_objects:
+            common.get_modifier_objects(o, select=True)
 
             if self.deselect_current:
-                obj.select_set(False)
+                o.select_set(False)
                         
         return {'FINISHED'}
-    
-class OpABSetModifierObjectViewportVisibility(bpy.types.Operator, CategoryBaseModifier):
-    """Sets the viewport visiblity of the objects referenced inside modifiers"""
-    bl_idname = "object.ab_set_modifier_object_viewport_visibility"
-    bl_label = "Set modifier object viewport visibility"
+
+class ABBU_OT_SetModifierVis(Operator, CatMod):
+    """Sets the viewport visibility of objects referenced inside modifiers on one or more selected objects"""
+    bl_idname = "object.abbu_set_modifier_object_viewport_vis"
+    bl_label = "Set Modifier Object(s) Viewport Visibility"
     bl_options = {'REGISTER', 'UNDO'}
-    
-    visible : bpy.props.BoolProperty(
+
+    visible : BoolProperty(
         default = False
     )
 
     def execute(self, context):
-        for obj in ab_common.get_selected_objects():
-            cached_objects : tuple[bpy.types.Object] = ab_modifier_caching.get_linked_cached_objects(obj)
+        for o in bpy.context.selected_objects:
+            cached_objects : tuple[bpy.types.Object] = mod_cache.get_linked_cached_objects(o)
             for cached_object in cached_objects:
-                modifier_objects : tuple[bpy.types.Object] = ab_common.get_modifier_objects(cached_object)
+                modifier_objects : tuple[bpy.types.Object] = common.get_modifier_objects(cached_object)
                 for modifier_obj in modifier_objects:
                     modifier_obj.hide_viewport = not self.visible
 
-            modifier_objects : tuple[bpy.types.Object] = ab_common.get_modifier_objects(obj)
+            modifier_objects : tuple[bpy.types.Object] = common.get_modifier_objects(o)
             for modifier_obj in modifier_objects:
                 modifier_obj.hide_viewport = not self.visible
                         
@@ -68,7 +117,7 @@ class OpABSetModifierObjectViewportVisibility(bpy.types.Operator, CategoryBaseMo
     
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self)
-        
+
     def draw(self, context):
         layout = self.layout
         col = layout.column()
@@ -77,107 +126,50 @@ class OpABSetModifierObjectViewportVisibility(bpy.types.Operator, CategoryBaseMo
         row.label(text = "Viewport Object Visibility:")
         row.prop(self, 'visible', icon = 'RESTRICT_VIEW_OFF' if self.visible else 'RESTRICT_VIEW_ON',
                  text = 'Visible' if self.visible else 'Hidden')
-    
-class OpABCacheModifiers(bpy.types.Operator, CategoryBaseModifier):
-    """Caches the modifiers of the currently selected"""
-    bl_idname = "wm.ab_cache_modifiers"
-    bl_label = "Cache Modifiers"
-    bl_options = {'REGISTER', 'UNDO'}
 
-    def execute(self, context):
-        selected_objects_ordered : tuple[bpy.types.Object] = tuple(sorted(ab_common.get_selected_objects(),
-                                                                          key = lambda x: x.name,
-                                                                          reverse=False))
-
-        for current_obj in selected_objects_ordered:
-            # Create a new mesh
-            # if current_obj.type == 'MESH':
-            deps_graph = bpy.context.evaluated_depsgraph_get()
-            obj_data_new = bpy.data.meshes.new_from_object(current_obj.evaluated_get(deps_graph),
-                                                            depsgraph = deps_graph)
-            copied_obj_name : str = current_obj.name
-            copied_obj : bpy.types.Object = bpy.data.objects.new(current_obj.name, obj_data_new)
-            copied_obj.matrix_world = current_obj.matrix_world
-            copied_obj.name = copied_obj_name
-
-            copied_obj_data_name : str = current_obj.data.name
-            copied_obj.data.name = copied_obj_data_name
-            
-            # Source  object name
-            current_obj.name = f"{copied_obj.name}_cache"
-            current_obj.data.name = f"{copied_obj.data.name}_cache"
-
-
-            # stored_modifiers : list [bpy.types.Modifier] = []
-            for modifier in current_obj.modifiers:
-                # stored_modifiers.append(modifier)
-                modifier.show_viewport = False
-            # current_obj.modifiers.clear()
-
-            # print(f"Copied modifiers = {stored_modifiers}")
-
-            # Re-parent children
-            if current_obj.children:
-                for child in current_obj.children:
-                    child.parent = copied_obj
-            
-            # Link object to scene
-            bpy.context.collection.objects.link(copied_obj)
-
-            copied_obj["ab_cached_object"] : bpy.types.Object = current_obj
-            current_obj.select_set(False)
-            copied_obj.select_set(True)
-
-            if bpy.context.active_object == current_obj:
-                bpy.context.view_layer.objects.active = copied_obj
-
-            current_obj.hide_viewport = True
-            current_obj.hide_render = True
-
-            
-
-            # copied_obj["ab_cached_modifiers"] : list[bpy.types.Modifier] = stored_modifiers
-        
-        # bpy.ops.object.delete({"selected_objects": selected_objects})
-        
-        return {'FINISHED'}
-    
-class OpABUnCacheModifiers(bpy.types.Operator, CategoryBaseModifier):
-    """Returns cached modifiers from the object"""
-    bl_idname = "wm.ab_uncache_modifiers"
+class ABBU_OT_UncacheModifiers(Operator, CatMod):
+    """Restores the original mesh with its modifiers prior to caching"""
+    bl_idname = "wm.abbu_uncache_modifiers"
     bl_label = "Uncache Modifiers"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        selected_objects_ordered : tuple[bpy.types.Object] = tuple(sorted(ab_common.get_selected_objects(),
+        selected_objects_ordered : tuple[bpy.types.Object] = tuple(sorted(bpy.context.selected_objects,
                                                                           key = lambda x: x.name,
                                                                           reverse=False))
 
         objects_to_delete : list[bpy.types.Object] = []
-        for current_obj in selected_objects_ordered:
-            if current_obj["ab_cached_object"]:
-                cached_obj : bpy.types.Object = current_obj["ab_cached_object"]
-                cached_obj.name = current_obj.name
-                cached_obj.data.name = current_obj.data.name
+        for o in selected_objects_ordered:
+            if cached_obj_prop_name in o:
+                cached_obj : bpy.types.Object = o[cached_obj_prop_name]
+                cached_obj.name = o.name
+                cached_obj.data.name = o.data.name
 
                 for modifier in cached_obj.modifiers:
                     modifier.show_viewport = True
 
-                cached_obj.hide_viewport = current_obj.hide_viewport
-                cached_obj.hide_render = current_obj.hide_render
-
-                objects_to_delete.append(current_obj)
+                cached_obj.hide_viewport = o.hide_viewport
+                cached_obj.hide_render = o.hide_render
 
                 cached_obj.select_set(True)
 
-                if bpy.context.active_object == current_obj:
+                for child in o.children:
+                    parent_and_keep_transform(cached_obj, child)
+
+                if bpy.context.active_object == o:
                     bpy.context.view_layer.objects.active = cached_obj
 
-        bpy.ops.object.delete({"selected_objects": objects_to_delete})
-        
+                objects_to_delete.append(o)
+
+        if bpy.app.version >= (4, 0, 0):
+            for o in objects_to_delete:
+                bpy.data.objects.remove(o, do_unlink = True)
+        else:
+            bpy.ops.object.delete({"selected_objects": objects_to_delete})
+
         return {'FINISHED'}
 
-OPERATORS : tuple[bpy.types.Operator] = (OpABSelectModifierObjects,
-                                         OpABSetModifierObjectViewportVisibility,
-                                         OpABCacheModifiers,
-                                         OpABUnCacheModifiers)
+OPERATORS : tuple[Operator] = (ABBU_OT_SelectModifierObjects,
+                               ABBU_OT_SetModifierVis,
+                               ABBU_OT_CacheModifiers,
+                               ABBU_OT_UncacheModifiers)

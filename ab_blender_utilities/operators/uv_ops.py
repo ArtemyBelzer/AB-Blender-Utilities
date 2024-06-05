@@ -1,5 +1,5 @@
 # Artemy Belzer's Blender Utilities - Additional Blender utilities.
-# Copyright (C) 2023 Artemy Belzer
+# Copyright (C) 2023-2024 Artemy Belzer
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,175 +15,147 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
-from ..lib import ab_common, ab_uv
+from bpy.props import BoolProperty, CollectionProperty, EnumProperty, StringProperty
+from bpy.types import MeshUVLoopLayer, Operator, PropertyGroup
 
-class CategoryBaseUVs(ab_common.Category):
-    category = "UVs"
-    category_arg = ab_common.OperatorCategories.CUSTOM
-    category_icon = 'UV'
+from .categories import CatUV
+from ..lib.uv import get_uv_list_from_selected, get_uv_names_from_objects
 
-    @classmethod
-    def poll(cls, context):
-        targets : tuple[bpy.types.Object] = ab_common.get_selected_objects()
-        return len(targets)>0 and\
-        ab_uv.get_uv_channel_count(targets)>0
 
-class ABUVSelection(bpy.types.PropertyGroup):
-    uv_channel : bpy.props.StringProperty()
-    uv_selected : bpy.props.BoolProperty(name = "")
+class ABBU_PT_UV_Selection(PropertyGroup):
+    name : StringProperty()
+    selected : BoolProperty(name = "")
 
-class OpABAddUVChannel(bpy.types.Operator, CategoryBaseUVs):
-    """Adds UV channels on selected objects"""
-    bl_idname = "object.ab_add_uv_channel_on_selected"
-    bl_label = "Add UV Channel"
+class ABBU_OT_AddUVLayer(Operator, CatUV):
+    """Adds a UV layer to one or more objects"""
+    bl_idname = "wm.abbu_ad_uv_layer"
+    bl_label = "Add UV Layer"
     bl_options = {'REGISTER', 'UNDO'}
 
-    category_arg = ab_common.OperatorCategories.SELECTION
-
-    new_name : bpy.props.StringProperty(
+    new_name : StringProperty(
         name = "Name",
         default = "UVMap"
     )
 
-    set_as_active : bpy.props.BoolProperty(
+    set_as_active : BoolProperty(
         name = "Set as Active",
         default = False
     )
 
     def execute(self, context):
-        targets : tuple[bpy.types.Object] = ab_common.get_selected_objects()
-        for obj in targets:
-            try:
-                obj.data.uv_layers.new(name = self.new_name)
+        for o in bpy.context.selected_objects:
+            if o.type == 'MESH':
+                uv = o.data.uv_layers.new(name = self.new_name)
                 if self.set_as_active:
-                    obj.data.uv_layers.active = obj.data.uv_layers[self.new_name]
-            except Exception as e:
-                ab_common.error(self, e)
+                    o.data.uv_layers.active = uv
 
         return {'FINISHED'}
     
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self)
 
-class OpABSetActiveUVChannel(bpy.types.Operator, CategoryBaseUVs):
-    """Sets the active UV channel on the selected objects.\n
-    If the channel does not exist, the active UV channel is not set on the other object"""
-    bl_idname = "object.ab_set_active_uv_channel"
-    bl_label = "Set active UV Channel"
+class ABBU_OT_DeleteUVLayers(Operator, CatUV):
+    """Deletes multiple UV layers from one or more objects.\nAny UV layers that are checked will be deleted"""
+    bl_idname = "wm.abbu_delete_uv_layers"
+    bl_label = "Delete UV Layer(s)"
     bl_options = {'REGISTER', 'UNDO'}
 
-    target_uv_channel : bpy.props.EnumProperty(
-        items = ab_uv.unique_uv_channel_list,
-        name = "Target UV Channel"
-    )
-
-    deselect_invalid : bpy.props.BoolProperty(
-        name = "Deselect Invalid",
-        default = True
+    uv_layers : CollectionProperty(
+        type = ABBU_PT_UV_Selection
     )
 
     def execute(self, context):
-        targets : tuple[bpy.types.Object] = ab_common.get_selected_objects()
-        for obj in targets:
-            try:
-                target_uv : bpy.types.MeshUVLoopLayer = obj.data.uv_layers[self.target_uv_channel]
-                obj.data.uv_layers.active = target_uv
-            except:
-                if self.deselect_invalid:
-                    obj.select_set(False)
-
+        for o in bpy.context.selected_objects:
+            if o.type == 'MESH':
+                for uv in self.uv_layers:
+                    if uv.name in o.data.uv_layers:
+                        if uv.selected:
+                            uvl : MeshUVLoopLayer = o.data.uv_layers[uv.name]
+                            o.data.uv_layers.remove(uvl)
+        
         return {'FINISHED'}
     
     def invoke(self, context, event):
+        self.uv_layers.clear()
+        uv_names : tuple[str] = get_uv_names_from_objects(bpy.context.selected_objects)
+        
+        for uv in uv_names:
+            uv_c = self.uv_layers.add()
+            uv_c.name = uv
         return context.window_manager.invoke_props_dialog(self)
         
-class OpABRenameUVChannel(bpy.types.Operator, CategoryBaseUVs):
-    """Sets the active UV channel on the selected objects.\n
-    If the channel does not exist, the active UV channel is not set on the other object"""
-    bl_idname = "object.ab_rename_uv_channel"
-    bl_label = "Rename UV Channel"
+    def draw(self, context):
+        col = self.layout.column()
+        col.label(text = "UV Map Layer Selection")
+        box = col.box()
+        for uv in self.uv_layers:
+            row = box.row()
+
+            row.prop(uv, 'selected')
+            row.label(text = uv.name, icon = 'GROUP_UVS')
+
+class ABBU_OT_RenameUVLayer(Operator, CatUV):
+    """Renames a UV layer on one or more objects"""
+    bl_idname = "wm.abbu_rename_uv_layer"
+    bl_label = "Rename UV Layer"
     bl_options = {'REGISTER', 'UNDO'}
 
-    new_name : bpy.props.StringProperty(
+    new_name : StringProperty(
         name = "Name",
         default = "UVMap"
     )
 
-    target_uv_channel : bpy.props.EnumProperty(
-        items = ab_uv.unique_uv_channel_list,
-        name = "Target UV Channel"
-    )
-
-    deselect_invalid : bpy.props.BoolProperty(
-        name = "Deselect Invalid",
-        default = True
+    uv : EnumProperty(
+        items = get_uv_list_from_selected,
+        name = "Target UV Layer"
     )
 
     def execute(self, context):
-        targets : tuple[bpy.types.Object] = ab_common.get_selected_objects()
-        for obj in targets:
-            try:
-                target_uv : bpy.types.MeshUVLoopLayer = obj.data.uv_layers[self.target_uv_channel]
-                target_uv.name = self.new_name
-            except:
-                if self.deselect_invalid:
-                    obj.select_set(False)
+        for o in bpy.context.selected_objects:
+            if o.type == 'MESH':
+                if self.uv in o.data.uv_layers:
+                    target_uv : MeshUVLoopLayer = o.data.uv_layers[self.uv]
+                    target_uv.name = self.new_name
 
         return {'FINISHED'}
     
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self)
 
-class OpABDeleteUVChannel(bpy.types.Operator, CategoryBaseUVs):
-    """Deletes the marked UV channels"""
-    bl_idname = "object.ab_delete_uv_channel"
-    bl_label = "Delete UV Channel(s)"
+class ABBU_OT_SetActiveUV(Operator, CatUV):
+    """Sets the active UV layer on one or more objects"""
+    bl_idname = "wm.abbu_set_active_uv"
+    bl_label = "Set Active UV Layer"
     bl_options = {'REGISTER', 'UNDO'}
 
-    selected_uv_channels : bpy.props.CollectionProperty(
-        type = ABUVSelection
+    uv : EnumProperty(
+        items = get_uv_list_from_selected,
+        name = "Target UV Layer"
     )
 
-    deselect_invalid : bpy.props.BoolProperty(
+    deselect_invalid : BoolProperty(
         name = "Deselect Invalid",
         default = True
     )
 
     def execute(self, context):
-        targets : tuple[bpy.types.Object] = ab_common.get_selected_objects()
-        for obj in targets:
-            try:
-                for uv in self.selected_uv_channels:
-                    target_uv : bpy.types.MeshUVLoopLayer = obj.data.uv_layers[uv.uv_channel]
-                    obj.data.uv_layers.remove(target_uv)
-            except:
-                if self.deselect_invalid:
-                    obj.select_set(False)
+        for o in bpy.context.selected_objects:
+            if o.type == 'MESH':
+                if self.uv in o.data.uv_layers:
+                    uv : MeshUVLoopLayer = o.data.uv_layers[self.uv]
+                    o.data.uv_layers.active = uv
+                else:
+                    if self.deselect_invalid:
+                        o.select_set(False)
 
         return {'FINISHED'}
     
     def invoke(self, context, event):
-        targets : tuple[bpy.types.Object] = ab_common.get_selected_objects()
-        uv_channels : tuple[str] = ab_uv.get_unique_uv_channel_names_from_selected(targets = targets)
-        for uv in uv_channels:
-            uv_channel = self.selected_uv_channels.add()
-            uv_channel.uv_channel = uv
         return context.window_manager.invoke_props_dialog(self)
-        
-    def draw(self, context):
-        layout = self.layout
-        col = layout.column()
-        col.label(text = "UV Map Layer Selection")
-        box = col.box()
-        for uv in self.selected_uv_channels:
-            row = box.row()
-            # row.label(text = uv, icon = 'GROUP_UVS')
-            row.prop(uv, 'uv_selected')
-            row.label(text = uv.uv_channel, icon = 'GROUP_UVS')
-        col.prop(self, "deselect_invalid")
-    
-OPERATORS : tuple[bpy.types.Operator] = (OpABAddUVChannel,
-                                         OpABSetActiveUVChannel,
-                                         OpABRenameUVChannel,
-                                         OpABDeleteUVChannel)
-PROPERTIES : tuple[bpy.types.PropertyGroup] = (ABUVSelection,)
+
+OPERATORS : tuple[Operator] = (ABBU_OT_AddUVLayer,
+                               ABBU_OT_DeleteUVLayers,
+                               ABBU_OT_SetActiveUV,
+                               ABBU_OT_RenameUVLayer)
+
+PROPERTIES : tuple[PropertyGroup] = (ABBU_PT_UV_Selection,)

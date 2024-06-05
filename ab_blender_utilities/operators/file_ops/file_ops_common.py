@@ -1,5 +1,5 @@
 # Artemy Belzer's Blender Utilities - Additional Blender utilities.
-# Copyright (C) 2023 Artemy Belzer
+# Copyright (C) 2023-2024 Artemy Belzer
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,102 +16,109 @@
 
 import bpy
 import bpy_extras
-import mathutils
-import types
 from bpy_extras.io_utils import ExportHelper, ImportHelper
-from ...lib import ab_common, ab_json, ab_quick_export
+from bpy.props import IntProperty, StringProperty
+from bpy.types import Operator
+
+import mathutils
+from ..categories import CatFile, CatFilePointCloud, PollType
+from ...lib import common, point_cloud, quick_export
 
 
-class CategoryFile(ab_common.Category):
-    """Operator category class for inheritance"""
-    category = "File"
-    category_icon = 'CURRENT_FILE'
-
-class OpABSetUtilityQuickExportPath(bpy.types.Operator, bpy_extras.io_utils.ImportHelper, CategoryFile):
-    """Opens a file browser so you can set the export directory"""
-    bl_idname = "wm.ab_set_utility_quick_export_path"
-    bl_label = "Set quick export path"
+class ABBU_OT_SetQuickExportDir(Operator, bpy_extras.io_utils.ImportHelper, CatFile):
+    """Opens a file browser to set the quick export directory"""
+    bl_idname = "wm.abbu_set_quick_export_dir"
+    bl_label = "Set Quick Export Directory"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
-    def poll(cls, context):
+    def poll(cl, context):
         return True
-    
-    directory : bpy.props.StringProperty(
+
+    directory : StringProperty(
         name = "Export Path",
         description = "Quick export directory path",
         subtype='DIR_PATH'
     )
 
-    filter_glob: bpy.props.StringProperty(
+    filter_glob: StringProperty(
         default="",
         options={'HIDDEN'},
         maxlen=255,
     )
 
     def execute(self, context):
-        bpy.context.scene[ab_quick_export.export_path_attribute] = bpy.path.relpath(self.directory)
+        bpy.context.scene[quick_export.export_path_attribute] = bpy.path.relpath(self.directory)
 
         return {'FINISHED'}
-    
-class OpABExportPointCloudFile(bpy.types.Operator, ExportHelper, CategoryFile):
-    """Exports currently selected objects as a point cloud"""
-    bl_idname = "export_scene.ab_export_to_point_cloud_file"
+
+class ABBU_OT_ExportPC(Operator, ExportHelper, CatFilePointCloud):
+    """Exports the currently selected objects as a JSON file representing a point cloud"""
+    bl_idname = "export_scene.abbu_export_pc"
     bl_label = "Export Point Cloud"
     bl_options = {'REGISTER'}
     bl_menu_label = "Point Cloud (.json)"
 
-    category_arg = ab_common.OperatorCategories.SELECTION
+    category_poll = PollType.OBJ_SEL
 
     filename_ext = ".json"
-    filter_glob: bpy.props.StringProperty(default="*.json", options={'HIDDEN'}, maxlen=255)
-
-    category = "File/Point Cloud"
+    filter_glob: StringProperty(default="*.json", options={'HIDDEN'}, maxlen=255)
     
     def execute(self, context):
         data : list = []
 
-        for obj in ab_common.get_selected_objects():
+        for o in bpy.context.selected_objects:
             asset_path = ""
-            if "asset_path" in obj:
-                asset_path = obj["asset_path"]
-            point = ab_json.PointCloudPoint(location = (obj.location.x, obj.location.y, obj.location.z),
-                                            rotation = (obj.rotation_euler.x, obj.rotation_euler.y, obj.rotation_euler.z),
-                                            scale = (obj.scale.x, obj.scale.y, obj.scale.z),
+            if "asset_path" in o:
+                asset_path = o["asset_path"]
+            point = point_cloud.PointCloudPoint(location = (o.location.x, o.location.y, o.location.z),
+                                            rotation = (o.rotation_euler.x, o.rotation_euler.y, o.rotation_euler.z),
+                                            scale = (o.scale.x, o.scale.y, o.scale.z),
                                             asset_path = asset_path)
-            
+
             data.append(point)
-        
-        file_handle : types.TextIOWrapper = open(self.filepath, 'w')
-        file_handle.write(ab_json.dump_pc_data(data))  # Write JSON string to file
-        file_handle.close()
+
+        with open(self.filepath, 'w', encoding = 'utf8') as file_handle:
+            file_handle.write(point_cloud.dump_pc_data(data))  # Write JSON string to file
 
         return {'FINISHED'}
-    
-    def menu_func(self, context):
-        self.layout.operator(OpABExportPointCloudFile.bl_idname, text=OpABExportPointCloudFile.bl_menu_label)
 
-class OpABImportPointCloudFile(bpy.types.Operator, ImportHelper, CategoryFile):
-    """Imports point cloud and creates instance objects"""
-    bl_idname = "import_scene.ab_import_point_cloud_file"
+    def menu_func(self, context):
+        self.layout.operator(ABBU_OT_ExportPC.bl_idname, text=ABBU_OT_ExportPC.bl_menu_label)
+
+class ABBU_OT_ImportPC(Operator, ImportHelper, CatFilePointCloud):
+    """Imports a JSON file containing a point cloud and creates instanced objects.\nAn object must be selected before importing to instantiate from"""
+    bl_idname = "import_scene.abbu_import_pc"
     bl_label = "Import Point Cloud"
     bl_options = {'REGISTER'}
     bl_menu_label = "Point Cloud (.json)"
 
-    filename_ext = ".json"
-    filter_glob: bpy.props.StringProperty(default="*.json", options={'HIDDEN'}, maxlen=255)
+    category_poll = PollType.OBJ_SEL
 
-    category = "File/Point Cloud"
-    
+    number_padding : IntProperty(
+        name = "Number Padding",
+        default = 3
+    )
+
+    number_splitter : StringProperty(
+        name = "Name Splitter",
+        default = ".")
+
+    filename_ext = ".json"
+    filter_glob: StringProperty(default="*.json", options={'HIDDEN'}, maxlen=255)
+
     def execute(self, context):
-        with open(self.filepath, 'r') as file_handle:
-            data : list | None = ab_json.load_pc_data(file_handle.read())
+        active_obj : tuple[bpy.types.Object] = bpy.context.active_object
+        if active_obj == None:
+            return {'CANCELED'}
+
+        with open(self.filepath, 'r', encoding = 'utf8') as file_handle:
+            data : list | None = point_cloud.load_pc_data(file_handle.read())
 
             if data is None:
-                ab_common.error(self, "Invalid point cloud data.")
+                common.error(self, "Invalid point cloud data.")
                 return {'CANCELLED'}
             
-            active_obj : tuple[bpy.types.Object] = bpy.context.active_object
 
             if active_obj:
                 if active_obj.type == "MESH":
@@ -119,7 +126,7 @@ class OpABImportPointCloudFile(bpy.types.Operator, ImportHelper, CategoryFile):
                         point_pos = mathutils.Vector(data_point[0])
                         point_rot = mathutils.Vector(data_point[1])
                         point_scale = mathutils.Vector(data_point[2])
-                        new_inst = bpy.data.objects.new("SMI_"+active_obj.name+"_{}".format(ab_common.pad_index(i+1)), 
+                        new_inst = bpy.data.objects.new(active_obj.name + "_Instance" + self.number_splitter + str(i+1).zfill(self.number_padding), 
                                                         active_obj.data)
                         bpy.context.collection.objects.link(new_inst)
                         new_inst.location = point_pos
@@ -128,18 +135,18 @@ class OpABImportPointCloudFile(bpy.types.Operator, ImportHelper, CategoryFile):
                         if data_point[3] != "":
                             new_inst["asset_path"] = data_point[3]
                 else:
-                    ab_common.warning(self, "You need a \'MESH\' object select to instantiate")
+                    common.warning(self, "You need a \'MESH\' object select to instantiate")
                     return {'CANCELED'}
             else:
-                ab_common.warning(self, "No active object selected, unable to instantiate")
+                common.warning(self, "No active object selected, unable to instantiate")
                 return {'CANCELED'}
         return {'FINISHED'}
-    
-    def menu_func(self, context):
-        self.layout.operator(OpABImportPointCloudFile.bl_idname, text=OpABImportPointCloudFile.bl_menu_label)
 
-OPERATORS : tuple[bpy.types.Operator] = (OpABSetUtilityQuickExportPath,
-                                         OpABExportPointCloudFile,
-                                         OpABImportPointCloudFile)
-EXPORTERS : tuple[bpy.types.Operator] = (OpABExportPointCloudFile,)
-IMPORTERS : tuple[bpy.types.Operator] = (OpABImportPointCloudFile,)
+    def menu_func(self, context):
+        self.layout.operator(ABBU_OT_ImportPC.bl_idname, text=ABBU_OT_ImportPC.bl_menu_label)
+
+OPERATORS : tuple[Operator] = (ABBU_OT_SetQuickExportDir,
+                               ABBU_OT_ExportPC,
+                               ABBU_OT_ImportPC)
+EXPORTERS : tuple[Operator] = (ABBU_OT_ExportPC,)
+IMPORTERS : tuple[Operator] = (ABBU_OT_ImportPC,)

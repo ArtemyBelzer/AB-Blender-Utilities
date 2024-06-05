@@ -1,5 +1,5 @@
 # Artemy Belzer's Blender Utilities - Additional Blender utilities.
-# Copyright (C) 2023 Artemy Belzer
+# Copyright (C) 2023-2024 Artemy Belzer
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,167 +15,112 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
+from bpy.props import BoolProperty
+from bpy.types import Operator
+
 import mathutils
-from ...addon import ab_constants, ab_persistent
-from ...lib import ab_common, ab_quick_export, ab_fbx
+from ..categories import CatFileFBX
+from ...addon import constants, persistent
+from ...lib import common, quick_export, fbx_files
 
 
-class CategoryFileFBX(ab_common.Category):
-    """Operator category class for inheritance"""
-    category = "File/FBX Quick Export"
-    category_arg = ab_common.OperatorCategories.SELECTION
+def _process_export_object(operator, obj):
+    # Selection
+    common.deselect_all()
+    obj.select_set(True)
+                
+    bpy.context.view_layer.objects.active = obj
+    active_object : bpy.types.Object = obj
+    child_objects = common.select_child_objects(operator.export_wire_objects, recursive = operator.recursive_export)
+    
+    renamed_child_objects : list = []
 
-class OpABQuickExportFBX(bpy.types.Operator, CategoryFileFBX):
-    """Starts a quick export operation"""
-    bl_idname = "export_scene.ab_quick_export_fbx"
-    bl_label = "Quick export active as FBX"
+    for child_object in child_objects:
+        if "/" in child_object.name:  # Name is path
+            child_object_entry : dict = {}
+            child_object_entry["ref"] = child_object
+            child_object_entry["old_name"] = child_object.name
+            child_object_name_split = child_object.name.split("/")
+            child_object.name = child_object_name_split[len(child_object_name_split) - 1]
+            renamed_child_objects.append(child_object_entry)
+
+    prefs = persistent.get_preferences()
+    if len(prefs.quick_export_name_collection) > 0:
+        quick_export.select_objects_from_name_collection(prefs.quick_export_name_collection)
+
+    # Location & rotation
+    location : mathutils.Vector = active_object.location.copy()
+    rotation : mathutils.Euler = active_object.rotation_euler.copy()
+    active_object.location = mathutils.Vector((0.0, 0.0, 0.0))
+    active_object.rotation_euler = mathutils.Euler((0.0, 0.0, 0.0))
+
+    # Export name
+    export_name : str = active_object.name
+    for x in constants.bake_suffixes:
+        export_name = export_name.replace(x, "")
+
+    # Remove path from object name
+    old_name : str = obj.name
+    obj.name = common.get_name_from_path(obj)
+                
+                
+    # FBX export operator
+    if persistent.get_preferences().uses_default_export_path:
+        quick_export_dir = persistent.get_preferences().default_export_path
+    else:
+        quick_export_dir = bpy.context.scene[quick_export.export_path_attribute]
+    file_path : str = bpy.path.abspath(quick_export_dir)\
+    .replace("\\","/")+"/"+export_name+".fbx"
+    common.make_directory_from_file_path(file_path)
+    fbx_files.export_fbx_file(file_path)
+    active_object.location = location
+    active_object.rotation_euler = rotation
+    # Return old object name
+    obj.name = old_name
+    
+    for child_object in renamed_child_objects:
+        child_object["ref"].name = child_object["old_name"]
+    
+class ABBU_OT_QuickExportFBX(Operator, CatFileFBX):
+    """Exports one or more selected objects as FBX files, with an option to include child objects recursively"""
+    bl_idname = "export_scene.quick_export_selected_fbx"
+    bl_label = "Quick Export As FBX"
     bl_options = {'REGISTER', 'UNDO'}
 
-    restore_selection : bpy.props.BoolProperty(
+    restore_selection : BoolProperty(
         name = "Restore Selection",
-        description = ab_constants.restore_selection_description,
+        description = constants.restore_selection_description,
         default = True
     )
 
-    export_wire_objects : bpy.props.BoolProperty(
+    export_wire_objects : BoolProperty(
         name = "Export Wired",
-        description = ab_constants.export_wired_description,
+        description = constants.export_wired_description,
         default = False
     )
     
-    def execute(self, context):
-        if ab_persistent.get_preferences().fbx_exporter_type == 'NATIVE':
-            if not ab_quick_export.has_quick_export_path():
-                ab_common.warning(self, ab_quick_export.export_path_warning_msg)
-                return {'CANCELLED'}
-            
-            # Selection
-            active_object : bpy.types.Object = bpy.context.active_object
-            ab_common.select_child_objects(self.export_wire_objects)
-
-            prefs = ab_persistent.get_preferences()
-            if prefs.quick_export_name_collection > 0:
-                ab_quick_export.select_objects_from_name_collection()
-
-            # Location & rotation
-            location : mathutils.Vector = active_object.location.copy()
-            rotation : mathutils.Euler = active_object.rotation_euler.copy()
-            active_object.location = mathutils.Vector((0.0, 0.0, 0.0))
-            active_object.rotation_euler = mathutils.Euler((0.0, 0.0, 0.0))
-
-            # Export name
-            export_name : str = active_object.name
-
-            # Remove path from object name
-            old_name : str= active_object.name
-            active_object.name : str= ab_common.get_name_from_path(active_object)
-
-            additional_export_directory : str = ""
-            if "_BO" in export_name:
-                additional_export_directory = "Blockout/"
-                export_name = export_name.replace("_BO", "")
-                if bpy.context.scene["directory_exclusion"]:
-                    export_name = export_name.replace(bpy.context.scene["directory_exclusion"], "")
-
-            # FBX export operator
-            if ab_persistent.get_preferences().uses_default_export_path:
-                quick_export_dir = ab_persistent.get_preferences().default_export_path
-            else:
-                quick_export_dir = bpy.context.scene[ab_quick_export.export_path_attribute]
-            file_path : str = bpy.path.abspath(quick_export_dir)\
-            .replace("\\","/")+"/"+additional_export_directory+export_name+".fbx"
-            ab_common.make_directory_from_file_path(file_path)
-            ab_fbx.export_fbx_file(file_path)
-            active_object.location = location
-            active_object.rotation_euler = rotation
-            active_object.name = old_name
-
-            if self.restore_selection:
-                ab_common.deselect_all()
-                active_object.select_set(True)
-                bpy.context.view_layer.objects.active = active_object
-
-            return {'FINISHED'}
-        else:
-            bpy.ops.export_scene.ab_export_custom()
-            return {'FINISHED'}
-    
-class OpABQuickExportSelectedFBX(bpy.types.Operator, CategoryFileFBX):
-    """Starts a quick export operation for currently selected objects"""
-    bl_idname = "export_scene.ab_quick_export_selected_fbx"
-    bl_label = "Quick export selected as FBX"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    restore_selection : bpy.props.BoolProperty(
-        name = "Restore Selection",
-        description = ab_constants.restore_selection_description,
-        default = True
-    )
-
-    export_wire_objects : bpy.props.BoolProperty(
-        name = "Export Wired",
-        description = ab_constants.export_wired_description,
-        default = False
-    )
+    recursive_export : BoolProperty(
+        name = "Recursive Export",
+        default = True)
     
     def execute(self, context):
-        if ab_persistent.get_preferences().fbx_exporter_type == 'NATIVE':
-            if not ab_quick_export.has_quick_export_path():
-                ab_common.warning(self, ab_quick_export.export_path_warning_msg)
+        if persistent.get_preferences().fbx_exporter_type == 'NATIVE':
+            if not quick_export.has_quick_export_path():
+                common.warning(self, quick_export.export_path_warning_msg)
                 return {'CANCELLED'}
 
-            export_objects : tuple[bpy.types.Object] = ab_common.get_selected_objects()
+            export_objects : tuple[bpy.types.Object] = bpy.context.selected_objects  # Selected objects
 
             # Stores the active object in the scene if `restore_selection` is `True`.
             if self.restore_selection:
                 active_object_scene : bpy.types.Object = bpy.context.active_object
             
-            for obj in export_objects:
-                # Selection
-                ab_common.deselect_all()
-                obj.select_set(True)
-                
-                bpy.context.view_layer.objects.active = obj
-                active_object : bpy.types.Object = obj
-                ab_common.select_child_objects(self.export_wire_objects)
-
-                prefs = ab_persistent.get_preferences()
-                if len(prefs.quick_export_name_collection) > 0:
-                    ab_quick_export.select_objects_from_name_collection(prefs.quick_export_name_collection)
-
-                # Location & rotation
-                location : mathutils.Vector = active_object.location.copy()
-                rotation : mathutils.Euler = active_object.rotation_euler.copy()
-                active_object.location = mathutils.Vector((0.0, 0.0, 0.0))
-                active_object.rotation_euler = mathutils.Euler((0.0, 0.0, 0.0))
-
-                # Export name
-                export_name : str = active_object.name
-                for x in ab_constants.bake_suffixes:
-                    export_name = export_name.replace(x, "")
-
-                # Remove path from object name
-                old_name : str = obj.name
-                obj.name = ab_common.get_name_from_path(obj)
-                
-                
-                # FBX export operator
-                if ab_persistent.get_preferences().uses_default_export_path:
-                    quick_export_dir = ab_persistent.get_preferences().default_export_path
-                else:
-                    quick_export_dir = bpy.context.scene[ab_quick_export.export_path_attribute]
-                file_path : str = bpy.path.abspath(quick_export_dir)\
-                .replace("\\","/")+"/"+export_name+".fbx"
-                ab_common.make_directory_from_file_path(file_path)
-                ab_fbx.export_fbx_file(file_path)
-                active_object.location = location
-                active_object.rotation_euler = rotation
-                # Return old object name
-                obj.name = old_name
+            for o in export_objects:
+                _process_export_object(self, o)
 
             if self.restore_selection:
-                ab_common.deselect_all()
-                ab_common.select_objects(export_objects)
+                common.deselect_all()
+                common.select_objects(export_objects)
                 bpy.context.view_layer.objects.active = active_object_scene
                     
             return {'FINISHED'}
@@ -183,5 +128,4 @@ class OpABQuickExportSelectedFBX(bpy.types.Operator, CategoryFileFBX):
             bpy.ops.export_scene.ab_export_custom()
             return {'FINISHED'}
     
-OPERATORS : tuple[bpy.types.Operator] = (OpABQuickExportFBX,
-                                         OpABQuickExportSelectedFBX)
+OPERATORS : tuple[Operator] = (ABBU_OT_QuickExportFBX,)
