@@ -1,5 +1,5 @@
 # Artemy Belzer's Blender Utilities - Additional Blender utilities.
-# Copyright (C) 2023 Artemy Belzer
+# Copyright (C) 2023-2024 Artemy Belzer
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,22 +16,21 @@
 
 bl_info = {
     "name" : "Artemy Belzer's Blender Utilities",
-    "blender" : (3, 4, 0),
+    "blender" : (4, 0, 0),
     "author" : "Artemy belzer",
-    "location" : "Object Menu, Search, or Shortcuts (Default keymap for pie menu 'Alt+E')",
+    "location" : "3D Viewport panels, the addon's pie menu (default keymap `Alt + E`), the Object menu, or the Object context menu.",
     "category" : "Utility",
-    "doc_url" : "https://github.com/ArtemyBelzer",
-    "version" : (1, 2, 2)
+    "version" : (1, 3, 0)
 }
 
-if "ab_core" in locals():
+if "core" in locals():
     import importlib
-    importlib.reload(ab_core)
+    importlib.reload(core)
 else:
-    from .addon import ab_core
+    from .addon import core
 
 def register() -> None:
-    ab_core.register(bl_info)
+    core.register()
 
 def unregister() -> None:
-    ab_core.unregister(bl_info)
+    core.unregister()

@@ -1,5 +1,5 @@
 # Artemy Belzer's Blender Utilities - Additional Blender utilities.
-# Copyright (C) 2023 Artemy Belzer
+# Copyright (C) 2023-2024 Artemy Belzer
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,83 +15,85 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import bpy
-from ..lib import ab_color_attributes, ab_common
+from bpy.props import BoolProperty, CollectionProperty, EnumProperty, StringProperty
+from bpy.types import Operator, PropertyGroup
 
-class CategoryBaseColorAttributes(ab_common.Category):
-    category = "Attributes/Colors"
-    category_arg = ab_common.OperatorCategories.CUSTOM
-    category_icon = 'GROUP_VCOL'
+from .categories import CatColorAttrib, PollType
+from ..addon.constants import e_vtx_col_domain, e_vtx_col_data_type
+from ..lib.color_attributes import get_unique_color_attrib_names_from_selected, unique_color_attribute_list
 
-    @classmethod
-    def poll(cls, context):
-        targets : tuple[bpy.types.Object] = ab_common.get_selected_objects()
-        return len(targets)>0 and\
-        ab_color_attributes.get_color_attribute_channel_count(targets)>0
 
-class ABColorAttributeSelection(bpy.types.PropertyGroup):
-    name : bpy.props.StringProperty()
-    selected : bpy.props.BoolProperty(name = "")
+class ABBU_PT_Color_Attrib_Selection(PropertyGroup):
+    name : StringProperty()
+    selected : BoolProperty(name = "")
 
-class OpABRemoveVertexColors(bpy.types.Operator):
-    """Removes all Color Attributes from selected objects"""
-    bl_idname = "object.ab_remove_vertex_colors_active"
-    bl_label = "Remove All"
+class ABBU_OT_AddColorAttrib(Operator, CatColorAttrib):
+    """Adds a color attribute to one or more selected objects"""
+    bl_idname = "object.abbu_add_color_attrib"
+    bl_label = "Add Color Attribute"
     bl_options = {'REGISTER', 'UNDO'}
-
-    @classmethod
-    def poll(cls, context):
-        return ab_color_attributes.get_color_attribute_channel_count(bpy.context.active_object)>0
     
+    category_poll = PollType.OBJ_MESH_SEL
+
+    name : StringProperty(
+        name = "Name",
+        default = "Color"
+    )
+    
+    domain : EnumProperty(
+        name = "Domain",
+        items = e_vtx_col_domain,
+        default = 'POINT'
+    )
+
+    data_type : EnumProperty(
+        name = "Data Type",
+        items = e_vtx_col_data_type,
+        default = 'FLOAT_COLOR'
+    )
+
     def execute(self, context):
-        ab_color_attributes.remove_vertex_colors_from_object(bpy.context.active_object)
+        for o in bpy.context.selected_objects:
+            if o.type == 'MESH':
+                o.data.color_attributes.new(name = self.name, domain = self.domain, type = self.data_type)
 
         return {'FINISHED'}
 
-class OpABRemoveVertexColorsFromSelected(bpy.types.Operator, CategoryBaseColorAttributes):
-    """Removes all Color Attributes from selected objects"""
-    bl_idname = "object.ab_remove_vertex_colors_from_selected"
-    bl_label = "Remove all Color Attributes"
-    bl_options = {'REGISTER', 'UNDO'}
-    
-    def execute(self, context):        
-        for obj in bpy.context.selected_objects:
-            ab_color_attributes.remove_vertex_colors_from_object(obj)
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
 
-        return {'FINISHED'}
-    
-class OpABDeleteColorAttributes(bpy.types.Operator, CategoryBaseColorAttributes):
-    """Deletes the marked Color Attribute(s)"""
-    bl_idname = "object.ab_delete_color_attributes"
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column()
+        col.prop(self, "name")
+        row = col.row()
+        row.prop(self, "domain")
+        row = col.row()
+        row.prop(self, "data_type")
+
+class ABBU_OT_DeleteColorAttribs(Operator, CatColorAttrib):
+    """Deletes the specified color attribute(s) from one or more selected objects"""
+    bl_idname = "object.abbu_delete_color_attribs"
     bl_label = "Delete Color Attribute(s)"
     bl_options = {'REGISTER', 'UNDO'}
 
-    selected_color_attrib : bpy.props.CollectionProperty(
-        type = ABColorAttributeSelection
-    )
-
-    deselect_invalid : bpy.props.BoolProperty(
-        name = "Deselect Invalid",
-        default = True
+    selected_color_attrib : CollectionProperty(
+        type = ABBU_PT_Color_Attrib_Selection
     )
 
     def execute(self, context):
-        targets : tuple[bpy.types.Object] = ab_common.get_selected_objects()
-        for obj in targets:
-            try:
+        for o in bpy.context.selected_objects:
+            if o.type == 'MESH':
                 for col in self.selected_color_attrib:
-                    target_col : bpy.types.FloatColorAttribute\
-                    | bpy.types.ByteColorAttribute = obj.data.color_attributes[col.name]
-                    obj.data.color_attributes.remove(target_col)
-            except:
-                if self.deselect_invalid:
-                    obj.select_set(False)
+                    if col.name in o.data.color_attributes and col.selected:
+                        o.data.color_attributes.remove(o.data.color_attributes[col.name])
 
         return {'FINISHED'}
     
     def invoke(self, context, event):
-        targets : tuple[bpy.types.Object] = ab_common.get_selected_objects()
-        color_attributes : tuple[str] = ab_color_attributes.get_unique_color_attrib_names_from_selected(targets = targets)
-        for col in color_attributes:
+        self.selected_color_attrib.clear()
+        col_attribs : tuple[str] = get_unique_color_attrib_names_from_selected(targets = bpy.context.selected_objects)
+        for col in col_attribs:
             col_attrib = self.selected_color_attrib.add()
             col_attrib.name = col
         return context.window_manager.invoke_props_dialog(self)
@@ -101,116 +103,89 @@ class OpABDeleteColorAttributes(bpy.types.Operator, CategoryBaseColorAttributes)
         col = layout.column()
         col.label(text = "Color Attribute Layer Selection")
         box = col.box()
-        col.prop(self, "deselect_invalid")
         for col in self.selected_color_attrib:
             row = box.row()
             row.prop(col, 'selected')
             row.label(text = col.name, icon = 'GROUP_VCOL')
 
-class OpABRenameColorAttribute(bpy.types.Operator, CategoryBaseColorAttributes):
-    """Renames the selected Color Attribute"""
-    bl_idname = "object.ab_rename_color_attribute"
+class ABBU_OT_RenameColorAttribs(Operator, CatColorAttrib):
+    """Renames the selected color attribute on one or more selected objects"""
+    bl_idname = "object.abbu_rename_color_attribs"
     bl_label = "Rename Color Attribute"
     bl_options = {'REGISTER', 'UNDO'}
 
-    new_name : bpy.props.StringProperty(
+    new_name : StringProperty(
         name = "Name",
         default = "Color"
     )
 
-    target_color_attrib : bpy.props.EnumProperty(
-        items = ab_color_attributes.unique_color_attribute_list,
+    target_color_attrib : EnumProperty(
+        items = unique_color_attribute_list,
         name = "Target Color Attribute"
     )
 
-    deselect_invalid : bpy.props.BoolProperty(
-        name = "Deselect Invalid",
-        default = True
-    )
-
     def execute(self, context):
-        targets : tuple[bpy.types.Object] = ab_common.get_selected_objects()
-        for obj in targets:
-            try:
-                obj.data.color_attributes.get(self.target_color_attrib).name = self.new_name
-            except:
-                if self.deselect_invalid:
-                    obj.select_set(False)
+        targets : tuple[bpy.types.Object] = bpy.context.selected_objects
+        for o in targets:
+            if self.target_color_attrib in o.data.color_attributes:
+                o.data.color_attributes.get(self.target_color_attrib).name = self.new_name
 
         return {'FINISHED'}
     
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self)
 
-class OpABSetActiveColorAttribute(bpy.types.Operator, CategoryBaseColorAttributes):
-    """Sets the active color attribute on the selected objects.\n
-    If the channel does not exist, the active color attribute is not set on the other object"""
-    bl_idname = "object.ab_set_active_color_attribute"
-    bl_label = "Set active Color Attribute"
+class ABBU_OT_SetActiveColorAttrib(Operator, CatColorAttrib):
+    """Sets the active color attribute on one or more selected objects"""
+    bl_idname = "object.abbu_set_active_color_attrib"
+    bl_label = "Set Active Color Attribute"
     bl_options = {'REGISTER', 'UNDO'}
 
-    target_color_attrib : bpy.props.EnumProperty(
-        items = ab_color_attributes.unique_color_attribute_list,
+    target_color_attrib : EnumProperty(
+        items = unique_color_attribute_list,
         name = "Target Color Attribute"
     )
 
-    deselect_invalid : bpy.props.BoolProperty(
-        name = "Deselect Invalid",
-        default = True
-    )
-
     def execute(self, context):
-        targets : tuple[bpy.types.Object] = ab_common.get_selected_objects()
-        for obj in targets:
-            try:
-                obj.data.color_attributes.active_color_name = self.target_color_attrib
-            except:
-                if self.deselect_invalid:
-                    obj.select_set(False)
+        targets : tuple[bpy.types.Object] = bpy.context.selected_objects
+        for o in targets:
+            if self.target_color_attrib in o.data.color_attributes:
+                o.data.color_attributes.active_color_name = self.target_color_attrib
 
         return {'FINISHED'}
     
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self)
         
-class OpABColorAttributeRenderSet(bpy.types.Operator, CategoryBaseColorAttributes):
-    """Sets which color attribute should be rendered"""
-    bl_idname = "object.ab_color_attribute_render_set"
-    bl_label = "Set Color Attributes to render"
+class ABBU_OT_SetRenderColorAttrib(Operator, CatColorAttrib):
+    """Specifies which color attribute should be rendered"""
+    bl_idname = "object.abbu_set_render_color_attrib"
+    bl_label = "Set Color Attributes To Render"
     bl_options = {'REGISTER', 'UNDO'}
 
-    target_color_attrib : bpy.props.EnumProperty(
-        items = ab_color_attributes.unique_color_attribute_list,
+    target_color_attrib : EnumProperty(
+        items = unique_color_attribute_list,
         name = "Target Color Attribute"
     )
 
-    deselect_invalid : bpy.props.BoolProperty(
-        name = "Deselect Invalid",
-        default = True
-    )
-
     def execute(self, context):
-        targets : tuple[bpy.types.Object] = ab_common.get_selected_objects()
-        for obj in targets:
-            try:
+        targets : tuple[bpy.types.Object] = bpy.context.selected_objects
+        for o in targets:
+            if self.target_color_attrib in o.data.color_attributes:
                 target_color_idx : int = -1
-                for i, col in enumerate(obj.data.color_attributes):
+                for i, col in enumerate(o.data.color_attributes):
                     if col.name == self.target_color_attrib:
                         target_color_idx = i
-                obj.data.color_attributes.render_color_index = target_color_idx
-            except:
-                if self.deselect_invalid:
-                    obj.select_set(False)
+                o.data.color_attributes.render_color_index = target_color_idx
 
         return {'FINISHED'}
     
     def invoke(self, context, event):
         return context.window_manager.invoke_props_dialog(self)
     
-OPERATORS : tuple[bpy.types.Operator] = (OpABRemoveVertexColors,
-                                         OpABColorAttributeRenderSet,
-                                         OpABDeleteColorAttributes,
-                                         OpABRenameColorAttribute,
-                                         OpABRemoveVertexColorsFromSelected,
-                                         OpABSetActiveColorAttribute)
-PROPERTIES : tuple[bpy.types.PropertyGroup] = (ABColorAttributeSelection,)
+OPERATORS : tuple[Operator] = (ABBU_OT_AddColorAttrib,
+                               ABBU_OT_DeleteColorAttribs,
+                               ABBU_OT_RenameColorAttribs,
+                               ABBU_OT_SetActiveColorAttrib,
+                               ABBU_OT_SetRenderColorAttrib)
+PROPERTIES : tuple[PropertyGroup] = (ABBU_PT_Color_Attrib_Selection,)

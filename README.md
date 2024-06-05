@@ -1,139 +1,82 @@
-# Artemy Belzer's Blender Utilities
-## Note from Author
-This plugin is a set of operators I have used throughout the years to speed up my workflow in Blender. These actions mainly organize and speed up content management in a DCC pipeline.
+This Blender addon is a collection of utilities designed to speed up your workflow. It includes features such as an FBX quick export button for exporting to an intermediate directory, batch UV and color attribute tools, and the ability to select all objects referenced in modifiers, among others.
 
-## Guide
-### Accessing the main menu.
-There are two ways to access the list of operators in the plugin.
-By pressing `Alt+E` (default keymap).
-By pressing `RMB/right-click` and navigating to the `Extra Utilities` submenu.
-Go into the `Object` menu in the 3D viewport and navigate to the `Extra Utilities` submenu.
+The addon is built to allow new operators to be quickly added to its categorized panels and menus.
 
-### Batch Rename+
-![AB_Blender_Utilities_Batch_Rename_Plus_01](https://github.com/ArtemyBelzer/ab-blender-utilities/assets/143417950/b49bafc4-64c6-4f1a-b78e-a678049a3741)
+The Utilities menu can be accessed through the 3D Viewport panels, the addon's pie menu (default keymap `Alt + E`), the Object menu, or the Object context menu.
 
-The Batch Rename+ tool is based on the native Batch Rename tool by Blender. In addition to that it also has extended actions and some additional settings. You can open the Batch Rename+ tool by pressing `Ctrl+F2` (default keymap).
-Native Batch Rename tool:
-https://docs.blender.org/manual/en/latest/files/blend/rename.html#batch-rename
-GitHub repo:
-https://github.com/blender/blender/
+## Operators
 
-#### Batch Rename+ Actions
-- **Item Number:** 
-The user can get the selected item number and either replace the name with the number or add it as a prefix/suffix.
--**Object Type:** 
-The user can get the current object type and either replace the name with the type or add it as a prefix/suffix.
-- **Splitter:** 
-Adds a splitter to the name.
-- **Active Object:** 
-The user can get the current active object and either replace the name with the active object's name or add it as a prefix/suffix.
-- **Utilities Expression:** 
-Custom expression from AB Utilities. The syntax is from the old Auto/Advanced Rename tool.
+### Cleanup
 
-![AB_Blender_Utilities_Batch_Rename_Plus_02_v2](https://github.com/ArtemyBelzer/ab-blender-utilities/assets/143417950/65d56a5e-8f48-4a12-b346-a40bac73cbd3)
+#### Data Blocks
+- `Reorder Object Data Alphabetically`: Reorders object data blocks alphabetically.
+- `Reorder Object Data Alphabetically Based On Modifiers`: Reorders object data blocks alphabetically based on the modifier order.
 
-![AB_Blender_Utilities_Batch_Rename_Plus_03](https://github.com/ArtemyBelzer/ab-blender-utilities/assets/143417950/b02aa158-105f-4610-9db3-fc57a6e25fcd)
+#### Materials
+- `Remove Unused Materials`: Removes unused materials from the selected objects.
 
+### Data
 
-#### Batch Rename+ Advanced Settings
-- Rename Data
-Renames the object's data if it's present.
-- Use custom numbering convention
-Automatically numbers assets with the custom naming convention without manually specifying the action. If only one selected item is present, the numbering does not occur.
-- Use a splitter between actions
-Adds a splitter between every action that adds new content to the name.
+#### Color Attributes
+- `Add Color Attribute`: Adds a color attribute to one or more selected objects.
+- `Delete Color Attribute(s)`: Deletes the specified color attribute(s) from one or more selected objects.
+- `Rename Color Attribute`: Renames the selected color attribute on one or more selected objects.
+- `Set Active Color Attribute`: Sets the active color attribute on one or more selected objects.
+- `Set Color Attributes To Render`: Specifies which color attribute should be rendered.
 
-#### Utilities Expression
-The Utilities Expression action is context and argument-based. The Utilities Expression action rename your assets depending on the objects selected. When no argument is present, and multiple objects are selected, the operator renames the assets to "<New Name><Splitter><Count>". i.e. The third selected object in a selection of five after renaming will be "NewObjectName_03".
+#### Custom Properties
+- `Random Custom Property`: Randomizes a custom property on a selected object.
+- `Set Custom Property`: Adds or sets a custom property.
 
-The user can supply the following expressions:
-- **"$name"**: references the current name of the object.
-- **"$type"**: returns the internal object type of an object. You can combine this with "$replace" to replace object types of Blender into some other naming convention. i.e. To rename "MESH" to "SM," use "$replace("MESH", "SM")".
-- **"$active"**: returns the name of the currently active object in the scene.
-- **"$index"**: returns the index of the currently selected object.
-- **"$no_index"**: prevents the automatic addition of context-based numbering when renaming multiple objects.
-- **"$replace(str_old, str_new)"**: finds all occurrences of the first argument and replaces them with the second one.
+### File
 
-Usage example:
-`$type$replace("MESH", "SM")_Cube`
+- `Set Quick Export Directory`: Opens a file browser to set the quick export directory.
 
-![AB_Blender_Utilities_Auto_Advanced_Rename_Example](https://github.com/ArtemyBelzer/Artemy-Belzers-Blender-Utilities/assets/143417950/42a6cf37-e531-421e-83f1-baf1dbdb40ec)
+#### FBX
+- `Quick Export As FBX`: Exports one or more selected objects as FBX files, with an option to include child objects recursively.
 
-### Alternative Menu layouts & Customization
-Users can exclude specific categories from appearing in the plugin's "Quick Menu" (Alt+E). Submenu inclusion/exclusion can be found under the "General" tab in the plugin's properties; an alternative menu layout, a feature to draw operator menus as buttons, and a feature that adds certain utilities to the properties panel are also available.
+#### Point Cloud
+- `Export Point Cloud`: Exports the currently selected objects as a JSON file representing a point cloud.
+- `Import Point Cloud`: Imports a JSON file containing a point cloud and creates instanced objects. An object must be selected before importing to instantiate from.
 
-![AB_Blender_Utilities_Alternative_Menu](https://github.com/ArtemyBelzer/ab-blender-utilities/assets/143417950/2df8adb4-52ce-4d3f-942f-8c8136a3d300)
+### Modifiers
+- `Cache Modifiers`: Caches the modifiers of the currently selected object by duplicating it, applying modifiers on the duplicate, and hiding the original object with disabled modifiers.
+- `Select Modifier Objects`: Selects the objects referenced inside modifiers on one or more objects.
+- `Set Modifier Object(s) Viewport Visibility`: Sets the viewport visibility of objects referenced inside modifiers on one or more selected objects.
+- `Uncache Modifiers`: Restores the original mesh with its modifiers prior to caching.
 
-![AB_Blender_Utilities_Menu_Customization](https://github.com/ArtemyBelzer/ab-blender-utilities/assets/143417950/346159ec-5c27-49bb-af45-4a7d2113ea40)
+### Naming
+- `Append Bool Operation To Bool Object Names`: Appends the boolean operation to the name of boolean objects. Select one or more objects that contain boolean modifiers.
+- `Custom Expression Object Rename` (Default keymap `Alt + F2`): Renames one or more objects using custom expressions.
+- `Object Names From Parent`: Renames child objects to match the naming of the parent object.
+- `Update Data Name From Object Name`: Updates the data name (if present) of one or more selected objects to match the object name.
 
-### Rebinding keys
-![AB_Blender_Utilities_Preferences_Keymaps_Tab](https://github.com/ArtemyBelzer/ab-blender-utilities/assets/143417950/02b4e24d-4806-4ece-89e0-1ebb74bc18f2)
-You can rebind keys inside Blender preferences by navigating to the plugin in the Add-ons tab. You can rebind the main menu, auto/advanced rename functionality, and the naming pie menu. If you would like to turn off the functioning of these keymaps, please uncheck the box on the left.
+### Objects
 
-### Bulk Asset export
-![AB_Blender_Utilities_Quick_Export](https://github.com/ArtemyBelzer/Artemy-Belzers-Blender-Utilities/assets/143417950/f51879e4-5c32-4a20-b7a7-e7ed898d0e77)
+#### Rotation
+- `Restore Rotation`: Restores the rotation of one or more objects.
+- `Store Rotation`: Stores the rotation of one or more objects.
 
-The user can select multiple assets in the scene and export them individually. This action also exports child assets. By default, the quick export action ignores assets rendered as a wireframe (viewport display as 'Wire'). You can export multiple selected assets or the currently active asset in the scene. The user can use directories in object names. During export, the quick export operators remove directories from the actual object name + data name.
+### Selection
+- `Select Child Objects`: Selects all child objects from the current object selection. This operator can select objects recursively.
 
-#### Intermediate directory
-To quickly export assets, you need an intermediate directory. To set an intermediate directory, set it by activating the "("Extra Utilities" or the Main Menu)/File/Set quick export path" operator.
+#### Saving
+- `Delete Saved Selection`: Deletes saved object selections created by the "Save Object Selection" operator.
+- `Restore Object Selection`: Restores the saved object selections.
+- `Save Object Selection`: Saves the currently selected objects. These selections can be restored using the "Restore Object Selection" operator.
 
-Alternatively, the user can set a global, project-independent quick export directory in the "General" tab of the plugin preferences by checking "Use default export path".
+### UVs
+- `Add UV Layer`: Adds a UV layer to one or more objects.
+- `Delete UV Layer(s)`: Deletes multiple UV layers from one or more objects. Any UV layers that are checked will be deleted.
+- `Rename UV Layer`: Renames a UV layer on one or more objects.
+- `Set Active UV Layer`: Sets the active UV layer on one or more objects.
 
+## Custom Expression Object Rename
 
-Suppose the user wishes to remove any references to an intermediate directory in the project. In that case, the user can click the "Delete quick export attributes from scenes" in the "General" tab of the plugin preferences.
-
-#### Quick Export Settings
-
-The user can customize how the asset gets exported under the "Quick Export" tab of the plugin preferences. The user can pick the native FBX exporter or a custom implementation in the "Exporter Type" dropdown.
-
-#### Quick Export Name Collection
-
-The "Quick Export Name Collection" feature allows the user to export wired objects that begin, end, or have an occurrence of a string in their name. This name collection feature can be helpful when exporting collision objects with a mesh without having to tick "Export Wired" for quick exports. The "Quick Export Name Collection" feature is under the "Quick Export" tab in the addon properties.
-
-## Bulk Attribute/Color/UV Operations
-The plugin offers functionality to perform essential bulk attribute, colour, and UV operations on multiple objects. You can set the currently active UV map, rename a colour attribute on various objects, etc.
-
-The operators are disabled if no relevant color attribute/uv channel is stored in the current selection. Ensure that a color attribute or a UV channel is present in the current selection to use the operator.
-
-If the "Deselect Invalid" checkbox is present, the operator will deselect objects that do not contain the attribute post-operation.
-
-![AB_Blender_Utilities_Delete_UV_Channel](https://github.com/ArtemyBelzer/Artemy-Belzers-Blender-Utilities/assets/143417950/184cd50e-5f3c-4233-a53c-206d569bfd96)
-
-![AB_Blender_Utilities_Rename_UV_Channel](https://github.com/ArtemyBelzer/Artemy-Belzers-Blender-Utilities/assets/143417950/2ed05bb0-7acd-469b-ab28-4992690fb127)
-
-![AB_Blender_Utilities_Set_Active_UV_Channel](https://github.com/ArtemyBelzer/Artemy-Belzers-Blender-Utilities/assets/143417950/67a9477a-9477-4192-b663-d7a343cca7af)
-
-##  Clean up unused data blocks (Global Cleanup).
-The "Global Cleanup" operator, under the "Cleanup" submenu, removes unused data blocks inside the current project file. The operator will delete any stored meshes/materials/textures/images with no references in the current project.
-
-## Feature Overview
-* Batch Rename+ with additional actions and functionality.
-* Bulk UV utilities: Add, delete, rename, and set active functionality on multiple objects.
-* Bulk Color Attribute/Vertex Color utilities: Delete, remove, rename, set to render, set active.
-* Bulk asset quick export to an intermediate directory.
-* Usage of directories in object names for quick exporting.
-* Export/Import a point cloud of selected assets in a .JSON format for other applications.
-* Cache object modifiers: create a non-evaluating copy of an object for quick previews.
-* Select all objects referenced in modifiers.
-* Remove unused materials on selected objects.
-* Clean up unused data blocks (Global Cleanup).
-* Reorder object data blocks alphabetically.
-* Reorder modifier object data blocks to the modifier order.
-* Store/Save the currently selected objects in Blender.
-* Select all child objects recursively from the current parent.
-* Randomize attributes on selected objects.
-* Store the current object rotation as an attribute for retrieval later.
-* Set attributes on selected objects.
-* Append boolean operation to the name of boolean objects.
-* Find and replace object names.
-* Object names from parent.
-* Set mesh data name from object name.
-* Dynamically filled operator menu.
-
-### Credits
-This addon uses the Auto Updater from CGCookie.
-https://github.com/CGCookie/blender-addon-updater
-
-This addon uses code snippets from Blender
-https://github.com/blender/blender
+- `$name()`: Returns the current name of the object.
+- `$type()`: Returns the object's type, e.g., MESH, CURVE, etc.
+- `$active()`: Returns the name of the active object in Blender. Returns `None` if an active object is not present.
+- `$idx()`: Returns the current index of the object.
+- `$idx(<padding : int>)`: Returns the current index of the object with zero padding. The padding input should be an integer.
+- `$oidx()`: Overrides the automatic index of the currently selected object. This works only when `Auto index on multiple` is checked in the operator.
+- `$replace("<word1>", "<word2>")`: Replaces any instances of `word1` with `word2`.

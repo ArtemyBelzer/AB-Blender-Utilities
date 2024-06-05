@@ -14,24 +14,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from bpy.types import Operator
-
-from ...lib import common
-from ...addon import persistent
+import bpy
 
 
-class ABBU_OT_ExportCustom(Operator):
-    """Starts a quick export operation"""
-    bl_idname = "export_scene.ab_export_custom"
-    bl_label = "Custom Export"
-    bl_options = {'REGISTER', 'UNDO'}
+def get_uv_list_from_selected(self, context) -> list[tuple[str]]:
+    uv_options : list[tuple[str]]= []
+    objs : tuple[bpy.types.Object] = bpy.context.selected_objects
+    uvs : tuple[str] = get_uv_names_from_objects(objs)
     
-    def execute(self, context):
-        """Available for custom implementation"""
-        if persistent.get_preferences().fbx_exporter_type == 'CUSTOM':
-            common.warning(self, "Custom operator not yet implemented.")
-            return {'FINISHED'}
-        
-        return {'CANCELED'}
+    for i, uv in enumerate(uvs):
+        uv_options.append((uv, uv, '', 'GROUP_UVS', i))
     
-OPERATORS : tuple[Operator] = (ABBU_OT_ExportCustom,)
+    return sorted(uv_options,
+                  key = lambda x : x[0],
+                  reverse = False)
+
+def get_uv_names_from_objects(objs) -> tuple[str]:
+    """Returns UV channels from currently selected objects."""
+    uvs = []
+    for o in objs:
+        if o.type == 'MESH':
+            for uv in o.data.uv_layers:
+                if uv.name not in uvs:
+                    uvs.append(uv.name)
+    
+    return tuple(uvs)

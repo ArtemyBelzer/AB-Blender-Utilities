@@ -14,24 +14,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import bpy
 from bpy.types import Operator
-
-from ...lib import common
-from ...addon import persistent
+from .categories import (PollType, CatCleanupMat)
 
 
-class ABBU_OT_ExportCustom(Operator):
-    """Starts a quick export operation"""
-    bl_idname = "export_scene.ab_export_custom"
-    bl_label = "Custom Export"
+class ABBU_OT_RemoveUnusedMaterialSlots(Operator, CatCleanupMat):
+    """Removes unused materials from the selected objects"""
+    bl_idname = "object.abbu_remove_unused_material_slots"
+    bl_label = "Remove Unused Material Slots"
     bl_options = {'REGISTER', 'UNDO'}
+
+    category_poll = PollType.OBJ_SEL
     
     def execute(self, context):
-        """Available for custom implementation"""
-        if persistent.get_preferences().fbx_exporter_type == 'CUSTOM':
-            common.warning(self, "Custom operator not yet implemented.")
-            return {'FINISHED'}
-        
-        return {'CANCELED'}
-    
-OPERATORS : tuple[Operator] = (ABBU_OT_ExportCustom,)
+        if bpy.app.version >= (4, 0, 0):
+            bpy.ops.object.material_slot_remove_unused()
+        else:
+            for o in bpy.context.selected_objects:
+                if o.type == 'MESH':
+                    bpy.ops.object.material_slot_remove_unused({"object": o})
+
+        return {'FINISHED'}
+
+OPERATORS : tuple[Operator] = (ABBU_OT_RemoveUnusedMaterialSlots,)
