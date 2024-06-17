@@ -20,7 +20,7 @@ bl_info = {
     "author" : "Artemy belzer",
     "location" : "3D Viewport panels, the addon's pie menu (default keymap `Alt + E`), the Object menu, or the Object context menu.",
     "category" : "Utility",
-    "version" : (1, 3, 0)
+    "version" : (1, 3, 1)
 }
 
 if "core" in locals():

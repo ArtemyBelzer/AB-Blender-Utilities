@@ -123,7 +123,7 @@ class ABBU_OT_CustomExpressionObjRename(Operator, CatNaming):
             o.name += num_splitter + auto_index_str
 
         # Object data
-        if hasattr(o, "data") and self.rename_obj_data:
+        if o.data and self.rename_obj_data:
             if o.data.users > 1 and not self.update_multi_user_mesh_data:
                 return
             o.data.name = o.name
